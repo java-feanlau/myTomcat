@@ -16,34 +16,19 @@
  */
 package org.apache.catalina.core;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.WeakHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.regex.Pattern;
-
-import javax.management.ObjectName;
-
-import org.apache.catalina.Container;
-import org.apache.catalina.Context;
-import org.apache.catalina.Engine;
-import org.apache.catalina.Globals;
-import org.apache.catalina.Host;
-import org.apache.catalina.JmxEnabled;
-import org.apache.catalina.Lifecycle;
-import org.apache.catalina.LifecycleEvent;
-import org.apache.catalina.LifecycleException;
-import org.apache.catalina.LifecycleListener;
-import org.apache.catalina.Valve;
+import org.apache.catalina.*;
 import org.apache.catalina.loader.WebappClassLoaderBase;
 import org.apache.catalina.util.ContextName;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.ExceptionUtils;
+
+import javax.management.ObjectName;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.regex.Pattern;
 
 /**
  * Standard implementation of the <b>Host</b> interface.  Each
@@ -66,6 +51,7 @@ public class StandardHost extends ContainerBase implements Host {
     public StandardHost() {
 
         super();
+        // 在创建的时候,就设置了pipeline
         pipeline.setBasic(new StandardHostValve());
 
     }
@@ -710,7 +696,10 @@ public class StandardHost extends ContainerBase implements Host {
             ContextName cn = new ContextName(context.getDocBase(), true);
             context.setPath(cn.getPath());
         }
-
+        // 调用父类也就是 concontainerBase来添加child 容器, 并把child的父容器设置为this(当前host)
+        // 容器都根据name来存储在containerBase中的HashMap<String, Container> children = new HashMap<>()
+        // 一般情况下  contextPath和contextName相等
+        // 把要添加的context,添加到此hsot容器的map中
         super.addChild(child);
 
     }
@@ -725,7 +714,7 @@ public class StandardHost extends ContainerBase implements Host {
         public void lifecycleEvent(LifecycleEvent event) {
             if (event.getType().equals(Lifecycle.AFTER_START_EVENT)) {
                 if (event.getSource() instanceof Context) {
-                    Context context = ((Context) event.getSource());
+                 Context context = ((Context) event.getSource());
                     childClassLoaders.put(context.getLoader().getClassLoader(),
                             context.getServletContext().getContextPath());
                 }

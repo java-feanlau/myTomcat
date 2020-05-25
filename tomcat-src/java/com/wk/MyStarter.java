@@ -15,6 +15,7 @@ import java.nio.charset.Charset;
 
 public class MyStarter {
     public static void main(String[] args) {
+        // 编程式 tomcat的创建
         Tomcat tomcat = new Tomcat();
         tomcat.setHostname("localhost");
         tomcat.setPort(9090);
@@ -50,25 +51,28 @@ public class MyStarter {
             }
         };
         tomcat.addServlet(context, "dispatch", httpServlet);
+        // 添加对应的servlet的映射
         context.addServletMappingDecoded("/dis", "dispatch");
-
+        // 添加过滤器
         FilterDef filterDef = new FilterDef();
         filterDef.setFilter(filter);
         filterDef.setFilterName("myFilter");
         filterDef.addInitParameter("username", "Allen");
-
+        // 添加过滤器对应的映射
         FilterMap filterMap = new FilterMap();
         filterMap.setFilterName("myFilter");
         filterMap.setCharset(Charset.forName("UTF-8"));
         filterMap.addURLPatternDecoded("/");
         filterMap.addServletName("*");
-
+        // 添加filter  以及 filterMap
         context.addFilterDef(filterDef);
         context.addFilterMap(filterMap);
 
         try{
             tomcat.init();
             tomcat.start();
+            // 1. 第一种情况: sleep
+            // 2. 开一个serversocket等待接收客户端发送的shutdown命令,接收到命令,则退出
             tomcat.getServer().await();
         } catch (LifecycleException e) {
             e.printStackTrace();

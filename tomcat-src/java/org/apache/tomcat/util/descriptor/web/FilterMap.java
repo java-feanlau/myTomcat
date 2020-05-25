@@ -16,13 +16,12 @@
  */
 package org.apache.tomcat.util.descriptor.web;
 
+import org.apache.tomcat.util.buf.UDecoder;
+
+import javax.servlet.DispatcherType;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Locale;
-
-import javax.servlet.DispatcherType;
-
-import org.apache.tomcat.util.buf.UDecoder;
 
 /**
  * Representation of a filter mapping for a web application, as represented
@@ -62,7 +61,7 @@ public class FilterMap extends XmlEncodingBase implements Serializable {
     public String getFilterName() {
         return this.filterName;
     }
-
+    // 设置此映射对应的filter的name
     public void setFilterName(String filterName) {
         this.filterName = filterName;
     }
@@ -96,6 +95,7 @@ public class FilterMap extends XmlEncodingBase implements Serializable {
     /**
      * The flag that indicates this mapping will match all url-patterns
      */
+    // 是否是过滤所有
     private boolean matchAllUrlPatterns = false;
 
     public boolean getMatchAllUrlPatterns() {
@@ -129,6 +129,7 @@ public class FilterMap extends XmlEncodingBase implements Serializable {
     public void addURLPattern(String urlPattern) {
         addURLPatternDecoded(UDecoder.URLDecode(urlPattern, getCharset()));
     }
+    // 设置此filterMap的映射关系
     public void addURLPatternDecoded(String urlPattern) {
         if ("*".equals(urlPattern)) {
             this.matchAllUrlPatterns = true;

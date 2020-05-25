@@ -16,53 +16,10 @@
  */
 package org.apache.catalina.startup;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.servlet.Servlet;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-
-import org.apache.catalina.Container;
-import org.apache.catalina.Context;
-import org.apache.catalina.Engine;
-import org.apache.catalina.Globals;
-import org.apache.catalina.Host;
-import org.apache.catalina.Lifecycle;
-import org.apache.catalina.LifecycleEvent;
-import org.apache.catalina.LifecycleException;
-import org.apache.catalina.LifecycleListener;
-import org.apache.catalina.Realm;
-import org.apache.catalina.Server;
-import org.apache.catalina.Service;
-import org.apache.catalina.Wrapper;
+import org.apache.catalina.*;
 import org.apache.catalina.authenticator.NonLoginAuthenticator;
 import org.apache.catalina.connector.Connector;
-import org.apache.catalina.core.ContainerBase;
-import org.apache.catalina.core.NamingContextListener;
-import org.apache.catalina.core.StandardContext;
-import org.apache.catalina.core.StandardEngine;
-import org.apache.catalina.core.StandardHost;
-import org.apache.catalina.core.StandardServer;
-import org.apache.catalina.core.StandardService;
-import org.apache.catalina.core.StandardWrapper;
+import org.apache.catalina.core.*;
 import org.apache.catalina.realm.GenericPrincipal;
 import org.apache.catalina.realm.RealmBase;
 import org.apache.catalina.util.ContextName;
@@ -71,6 +28,21 @@ import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.buf.UriUtil;
 import org.apache.tomcat.util.descriptor.web.LoginConfig;
 import org.apache.tomcat.util.res.StringManager;
+
+import javax.servlet.Servlet;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import java.io.*;
+import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.security.Principal;
+import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 // TODO: lazy init for the temp dir - only when a JSP is compiled or
 // get temp dir is called we need to create it. This will avoid the
@@ -206,6 +178,7 @@ public class Tomcat {
      * 'localhost'.
      * @param s The default host name
      */
+    // 设置hostname
     public void setHostname(String s) {
         hostname = s;
     }
@@ -322,6 +295,8 @@ public class Tomcat {
      * @return the deployed context
      */
     public Context addContext(String contextPath, String docBase) {
+        // getHost()在此处就会创建standardServer  standardService  standardEngine 以及standardHost
+        // 然后把context添加到host中
         return addContext(getHost(), contextPath, docBase);
     }
 
@@ -392,12 +367,15 @@ public class Tomcat {
      * @param servlet       The Servlet to add
      * @return The wrapper for the servlet
      */
+    // 添加servlet到容器
     public static Wrapper addServlet(Context ctx,
                                       String servletName,
                                       Servlet servlet) {
         // will do class for name and set init params
         Wrapper sw = new ExistingStandardWrapper(servlet);
+        // 设置servlet 的name
         sw.setName(servletName);
+        // 把此servlet设置到context中
         ctx.addChild(sw);
 
         return sw;
@@ -501,6 +479,7 @@ public class Tomcat {
         // This creates an APR HTTP connector if AprLifecycleListener has been
         // configured (created) and Tomcat Native library is available.
         // Otherwise it creates a NIO HTTP connector.
+        // 创建连接器
         Connector connector = new Connector("HTTP/1.1");
         connector.setPort(port);
         service.addConnector(connector);
@@ -552,11 +531,14 @@ public class Tomcat {
     }
 
     public Host getHost() {
+        // 获取engine,如果没有就创建
         Engine engine = getEngine();
+        // 第一次的时候,engine肯定是没有host容器的
+        // 那么就会走下面创建一个
         if (engine.findChildren().length > 0) {
             return (Host) engine.findChildren()[0];
         }
-
+        //
         Host host = new StandardHost();
         host.setName(hostname);
         getEngine().addChild(host);
@@ -568,13 +550,19 @@ public class Tomcat {
      * @return The engine
      */
     public Engine getEngine() {
+        // getServer()如获取server,如果没有呢,就创建
         Service service = getServer().findServices()[0];
+        // 第一次的时候,service中肯定是没有engine的,那么就会走下面创建一个
+        // 而service的获取engine的方法也能看出,一个service只能有一个engine
+        // 而一个server可以有多个service
         if (service.getContainer() != null) {
             return service.getContainer();
         }
+        //
         Engine engine = new StandardEngine();
         engine.setName( "Tomcat" );
         engine.setDefaultHost(hostname);
+        // createDefaultRealm 创建realm,用于用户的认证
         engine.setRealm(createDefaultRealm());
         service.setContainer(engine);
         return engine;
@@ -592,15 +580,16 @@ public class Tomcat {
         }
 
         System.setProperty("catalina.useNaming", "false");
-
+        // 创建StandardServer
         server = new StandardServer();
 
         initBaseDir();
 
         server.setPort( -1 );
-
+        // 创建service
         Service service = new StandardService();
         service.setName("Tomcat");
+        // 把service添加到server中
         server.addService(service);
         return server;
     }
@@ -628,6 +617,7 @@ public class Tomcat {
      */
     public Context addContext(Host host, String contextPath, String contextName,
             String dir) {
+        // 设置log的级别
         silence(host, contextName);
         Context ctx = createContext(host, contextPath);
         ctx.setName(contextName);
@@ -905,14 +895,18 @@ public class Tomcat {
      * @return newly created {@link Context}
      */
     private Context createContext(Host host, String url) {
+        // 默认就是创建StandardContext
         String contextClass = StandardContext.class.getName();
         if (host == null) {
             host = this.getHost();
         }
+        // 如果参数中设置的host是standardHost
+        // 那么使用host中设置的contextClass
         if (host instanceof StandardHost) {
             contextClass = ((StandardHost) host).getContextClass();
         }
         try {
+            // 反射创建StandardContext的实例
             return (Context) Class.forName(contextClass).getConstructor()
                     .newInstance();
         } catch (InstantiationException | IllegalAccessException

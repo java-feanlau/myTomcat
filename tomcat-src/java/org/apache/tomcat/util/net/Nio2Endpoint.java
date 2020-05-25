@@ -16,6 +16,15 @@
  */
 package org.apache.tomcat.util.net;
 
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
+import org.apache.tomcat.util.ExceptionUtils;
+import org.apache.tomcat.util.collections.SynchronizedStack;
+import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
+import org.apache.tomcat.util.net.jsse.JSSESupport;
+
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLSession;
 import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
@@ -23,33 +32,9 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousChannelGroup;
-import java.nio.channels.AsynchronousCloseException;
-import java.nio.channels.AsynchronousServerSocketChannel;
-import java.nio.channels.AsynchronousSocketChannel;
-import java.nio.channels.CompletionHandler;
-import java.nio.channels.FileChannel;
-import java.nio.channels.InterruptedByTimeoutException;
-import java.nio.channels.NetworkChannel;
-import java.nio.channels.ReadPendingException;
-import java.nio.channels.WritePendingException;
+import java.nio.channels.*;
 import java.nio.file.StandardOpenOption;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLSession;
-
-import org.apache.juli.logging.Log;
-import org.apache.juli.logging.LogFactory;
-import org.apache.tomcat.util.ExceptionUtils;
-import org.apache.tomcat.util.collections.SynchronizedStack;
-import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
-import org.apache.tomcat.util.net.jsse.JSSESupport;
+import java.util.concurrent.*;
 
 /**
  * NIO2 endpoint.
@@ -184,6 +169,7 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel> {
             }
 
             initializeConnectionLatch();
+            // 启动接收socket的线程
             startAcceptorThreads();
         }
     }
@@ -294,6 +280,7 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel> {
 
     @Override
     protected AbstractEndpoint.Acceptor createAcceptor() {
+        // 创建接收器
         return new Acceptor();
     }
 
@@ -304,8 +291,10 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel> {
      *  and processing may continue, <code>false</code> if the socket needs to be
      *  close immediately
      */
+    // todo 重点 重点  对接收的socket请求开始进行处理了哦.. 在这里
     protected boolean setSocketOptions(AsynchronousSocketChannel socket) {
         try {
+            // 对一些socket参数的配置
             socketProperties.setProperties(socket);
             Nio2Channel channel = nioChannels.pop();
             if (channel == null) {
@@ -313,21 +302,27 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel> {
                         socketProperties.getAppReadBufSize(),
                         socketProperties.getAppWriteBufSize(),
                         socketProperties.getDirectBuffer());
+                // 真是ssl和非ssl两种情况进行不同的处理
                 if (isSSLEnabled()) {
                     channel = new SecureNio2Channel(bufhandler, this);
                 } else {
                     channel = new Nio2Channel(bufhandler);
                 }
             }
+            // 注册一些回调函数
             Nio2SocketWrapper socketWrapper = new Nio2SocketWrapper(channel, this);
             channel.reset(socket, socketWrapper);
+            // 设置 读写的超时时间
             socketWrapper.setReadTimeout(getSocketProperties().getSoTimeout());
             socketWrapper.setWriteTimeout(getSocketProperties().getSoTimeout());
+            // keeplive
             socketWrapper.setKeepAliveLeft(Nio2Endpoint.this.getMaxKeepAliveRequests());
+            // 是否是ssl
             socketWrapper.setSecure(isSSLEnabled());
             socketWrapper.setReadTimeout(getConnectionTimeout());
             socketWrapper.setWriteTimeout(getConnectionTimeout());
             // Continue processing on another thread
+            // 在另一个线程对接收到的socket进行处理
             return processSocket(socketWrapper, SocketEvent.OPEN_READ, true);
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
@@ -337,7 +332,7 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel> {
         return false;
     }
 
-
+    // 创建一个具体的处理器
     @Override
     protected SocketProcessorBase<Nio2Channel> createSocketProcessor(
             SocketWrapperBase<Nio2Channel> socketWrapper, SocketEvent event) {
@@ -362,8 +357,9 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel> {
      * but periodically checks that the connector is still accepting (if not
      * it will attempt to start again).
      */
+    // 具体的接收器
     protected class Acceptor extends AbstractEndpoint.Acceptor {
-
+        // 具体接受请求的run函数
         @Override
         public void run() {
 
@@ -373,6 +369,7 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel> {
             while (running) {
 
                 // Loop if endpoint is paused
+                // 如果设置了pause状态,那么就sleep
                 while (paused && running) {
                     state = AcceptorState.PAUSED;
                     try {
@@ -389,12 +386,15 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel> {
 
                 try {
                     //if we have reached max connections, wait
+                    // 限流的操作
                     countUpOrAwaitConnection();
 
                     AsynchronousSocketChannel socket = null;
                     try {
                         // Accept the next incoming connection from the server
                         // socket
+                        // serverSocket开始运行,也就是开始接受连接
+                        // todo 重点 重点   这里就是socket接收请求的地方了
                         socket = serverSock.accept().get();
                     } catch (Exception e) {
                         // We didn't get a socket
@@ -415,6 +415,8 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel> {
                     if (running && !paused) {
                         // setSocketOptions() will hand the socket off to
                         // an appropriate processor if successful
+                        // setSocketOptions 开始对接收到的client socket进行处理
+                        // todo  重点 重点  开始对接收到的socket进行处理
                         if (!setSocketOptions(socket)) {
                             closeSocket(socket);
                        }
@@ -1732,13 +1734,13 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel> {
         public SocketProcessor(SocketWrapperBase<Nio2Channel> socketWrapper, SocketEvent event) {
             super(socketWrapper, event);
         }
-
+        // 对socket具体处理
         @Override
         protected void doRun() {
             boolean launch = false;
             try {
                 int handshake = -1;
-
+                // 刚开始是应该是一些ssl的握手信息
                 try {
                     if (socketWrapper.getSocket().isHandshakeComplete()) {
                         // No TLS handshaking required. Let the handler

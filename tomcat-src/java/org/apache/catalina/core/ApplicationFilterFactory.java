@@ -16,14 +16,14 @@
  */
 package org.apache.catalina.core;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.Servlet;
-import javax.servlet.ServletRequest;
-
 import org.apache.catalina.Globals;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.connector.Request;
 import org.apache.tomcat.util.descriptor.web.FilterMap;
+
+import javax.servlet.DispatcherType;
+import javax.servlet.Servlet;
+import javax.servlet.ServletRequest;
 
 /**
  * Factory for the creation and caching of Filters and creation
@@ -81,6 +81,9 @@ public final class ApplicationFilterFactory {
 
         // Acquire the filter mappings for this Context
         StandardContext context = (StandardContext) wrapper.getParent();
+        /**
+         * 获取standardContext中注册的filterMap
+         */
         FilterMap filterMaps[] = context.findFilterMaps();
 
         // If there are no filter mappings, we are done
@@ -100,10 +103,13 @@ public final class ApplicationFilterFactory {
         String servletName = wrapper.getName();
 
         // Add the relevant path-mapped filters to this filter chain
+        // 遍历此context中所有的filterMap,来找到匹配当前requet的fileter
         for (int i = 0; i < filterMaps.length; i++) {
+            // 根据DISPATCHER_TYPE_ATTR来判断是否匹配
             if (!matchDispatcher(filterMaps[i] ,dispatcher)) {
                 continue;
             }
+            // 根据url类匹配
             if (!matchFiltersURL(filterMaps[i], requestPath))
                 continue;
             ApplicationFilterConfig filterConfig = (ApplicationFilterConfig)

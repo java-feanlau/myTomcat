@@ -16,11 +16,6 @@
  */
 package org.apache.coyote.http11;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-
 import org.apache.coyote.InputBuffer;
 import org.apache.coyote.Request;
 import org.apache.juli.logging.Log;
@@ -32,6 +27,11 @@ import org.apache.tomcat.util.http.parser.HttpParser;
 import org.apache.tomcat.util.net.ApplicationBufferHandler;
 import org.apache.tomcat.util.net.SocketWrapperBase;
 import org.apache.tomcat.util.res.StringManager;
+
+import java.io.EOFException;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 
 /**
  * InputBuffer for HTTP that provides request header parsing as well as transfer
@@ -576,6 +576,9 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
         HeaderParseStatus status = HeaderParseStatus.HAVE_MORE_HEADERS;
 
         do {
+            /**
+             * 重点    解析http的header
+             */
             status = parseHeader();
             // Checking that
             // (1) Headers plus request line size does not exceed its limit
@@ -753,6 +756,7 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
      * @return false after reading a blank line (which indicates that the
      * HTTP header parsing is done
      */
+    // todo 解析http的header
     private HeaderParseStatus parseHeader() throws IOException {
 
         //

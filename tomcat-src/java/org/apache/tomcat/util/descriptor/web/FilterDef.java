@@ -16,13 +16,12 @@
  */
 package org.apache.tomcat.util.descriptor.web;
 
+import org.apache.tomcat.util.res.StringManager;
+
+import javax.servlet.Filter;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.servlet.Filter;
-
-import org.apache.tomcat.util.res.StringManager;
 
 
 /**
@@ -134,6 +133,7 @@ public class FilterDef implements Serializable {
      * The set of initialization parameters for this filter, keyed by
      * parameter name.
      */
+    // 记录此filter对应的parameter
     private final Map<String, String> parameters = new HashMap<>();
 
     public Map<String, String> getParameterMap() {

@@ -16,14 +16,14 @@
  */
 package org.apache.tomcat.util.descriptor.web;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.buf.B2CConverter;
 import org.apache.tomcat.util.res.StringManager;
+
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Base class for those elements that need to track the encoding used in the
@@ -64,7 +64,7 @@ public abstract class XmlEncodingBase {
         return charset.name();
     }
 
-
+    // 设置编码
     public void setCharset(Charset charset) {
         this.charset = charset;
     }
