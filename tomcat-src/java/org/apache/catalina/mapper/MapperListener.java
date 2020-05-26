@@ -16,27 +16,14 @@
  */
 package org.apache.catalina.mapper;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.catalina.Container;
-import org.apache.catalina.ContainerEvent;
-import org.apache.catalina.ContainerListener;
-import org.apache.catalina.Context;
-import org.apache.catalina.Engine;
-import org.apache.catalina.Host;
-import org.apache.catalina.Lifecycle;
-import org.apache.catalina.LifecycleEvent;
-import org.apache.catalina.LifecycleException;
-import org.apache.catalina.LifecycleListener;
-import org.apache.catalina.LifecycleState;
-import org.apache.catalina.Service;
-import org.apache.catalina.WebResourceRoot;
-import org.apache.catalina.Wrapper;
+import org.apache.catalina.*;
 import org.apache.catalina.util.LifecycleMBeanBase;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.res.StringManager;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -91,6 +78,9 @@ public class MapperListener extends LifecycleMBeanBase
 
     // ------------------------------------------------------- Lifecycle Methods
 
+    /**
+     * 解析host  context  servlet的映射关系,并记录到mapper里面
+     */
     @Override
     public void startInternal() throws LifecycleException {
 
@@ -102,14 +92,15 @@ public class MapperListener extends LifecycleMBeanBase
         }
 
         findDefaultHost();
-
+        // 给engine及其子容器 也添加上次listener
         addListeners(engine);
-
+        // 找到engine的host, 并注册其信息
         Container[] conHosts = engine.findChildren();
         for (Container conHost : conHosts) {
             Host host = (Host) conHost;
             if (!LifecycleState.NEW.equals(host.getState())) {
                 // Registering the host will register the context and wrappers
+                // 把host的信息注册保存起来, 用于后面请求来时候,比对该请求对应到那个host上
                 registerHost(host);
             }
         }
@@ -299,12 +290,14 @@ public class MapperListener extends LifecycleMBeanBase
      * Register host.
      */
     private void registerHost(Host host) {
-
+        // 获取host的别名
         String[] aliases = host.findAliases();
+        // 把host信息记录到 hosts
         mapper.addHost(host.getName(), aliases, host);
-
+        // 把host对应的子 context容器也进行注册保存
         for (Container container : host.findChildren()) {
             if (container.getState().isAvailable()) {
+                // 注册context信息
                 registerContext((Context) container);
             }
         }
@@ -373,7 +366,9 @@ public class MapperListener extends LifecycleMBeanBase
         WebResourceRoot resources = context.getResources();
         String[] welcomeFiles = context.findWelcomeFiles();
         List<WrapperMappingInfo> wrappers = new ArrayList<>();
-
+        /**
+         * 注册context对应的servlet信息
+         */
         for (Container container : context.findChildren()) {
             prepareWrapperMappingInfo(context, (Wrapper) container, wrappers);
 
@@ -460,10 +455,15 @@ public class MapperListener extends LifecycleMBeanBase
             List<WrapperMappingInfo> wrappers) {
         String wrapperName = wrapper.getName();
         boolean resourceOnly = context.isResourceOnlyServlet(wrapperName);
+        // 找到此wrapper对应哪些mapping
         String[] mappings = wrapper.findMappings();
+        /**
+         * 遍历其mapping, 把其信息添加到wrappers中
+         */
         for (String mapping : mappings) {
             boolean jspWildCard = (wrapperName.equals("jsp")
                                    && mapping.endsWith("/*"));
+            // 进一步把wrapper的信息封装到 WrapperMappingInfo
             wrappers.add(new WrapperMappingInfo(mapping, wrapper, jspWildCard,
                     resourceOnly));
         }

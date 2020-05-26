@@ -661,6 +661,9 @@ public class Http11Processor extends AbstractProcessor {
 
             // Parsing the request header
             try {
+                /**
+                 * 1. 解析 requestLine
+                 */
                 if (!inputBuffer.parseRequestLine(keptAlive)) {
                     if (inputBuffer.getParsingRequestLinePhase() == -1) {
                         return SocketState.UPGRADING;
@@ -677,7 +680,9 @@ public class Http11Processor extends AbstractProcessor {
                     keptAlive = true;
                     // Set this every time in case limit has been changed via JMX
                     request.getMimeHeaders().setLimit(endpoint.getMaxHeaderCount());
-                    // 解析http header
+                    /**
+                     * 2. 解析http header
+                     */
                     if (!inputBuffer.parseHeaders()) {
                         // We've read part of the request, don't recycle it
                         // instead associate it with the socket
@@ -754,7 +759,10 @@ public class Http11Processor extends AbstractProcessor {
                 rp.setStage(org.apache.coyote.Constants.STAGE_PREPARE);
                 try {
                     /**
-                     *  转换request
+                     *  1. 解析协议
+                     *  2. 验证header的头
+                     *  3. 解析host 以及 port
+                     *
                      */
                     prepareRequest();
                 } catch (Throwable t) {
@@ -942,6 +950,9 @@ public class Http11Processor extends AbstractProcessor {
         if (endpoint.isSSLEnabled()) {
             request.scheme().setString("https");
         }
+        /**
+         *  1. 解析 协议, 此处可以是https  或者  http
+         */
         MessageBytes protocolMB = request.protocol();
         if (protocolMB.equals(Constants.HTTP_11)) {
             http11 = true;
@@ -970,6 +981,9 @@ public class Http11Processor extends AbstractProcessor {
         MimeHeaders headers = request.getMimeHeaders();
 
         // Check connection header
+        /**
+         *  获取 connection的header
+         */
         MessageBytes connectionValueMB = headers.getValue(Constants.CONNECTION);
         if (connectionValueMB != null) {
             ByteChunk connectionValueBC = connectionValueMB.getByteChunk();
@@ -995,6 +1009,9 @@ public class Http11Processor extends AbstractProcessor {
         }
 
         // Check user-agent header
+        /**
+         * 3. 获取 user-agent 的header
+         */
         if (restrictedUserAgents != null && (http11 || keepAlive)) {
             MessageBytes userAgentValueMB = headers.getValue("user-agent");
             // Check in the restricted list, and adjust the http11
@@ -1013,6 +1030,9 @@ public class Http11Processor extends AbstractProcessor {
         // Check host header
         MessageBytes hostValueMB = null;
         try {
+            /**
+             *  4. host的header
+             */
             hostValueMB = headers.getUniqueValue("host");
         } catch (IllegalArgumentException iae) {
             // Multiple Host headers are not permitted
@@ -1034,6 +1054,9 @@ public class Http11Processor extends AbstractProcessor {
 
         // Check for an absolute-URI less the query string which has already
         // been removed during the parsing of the request line
+        /**
+         *  5. uri
+         */
         ByteChunk uriBC = request.requestURI().getByteChunk();
         byte[] uriB = uriBC.getBytes();
         if (uriBC.startsWithIgnoreCase("http", 0)) {
@@ -1184,6 +1207,9 @@ public class Http11Processor extends AbstractProcessor {
         }
 
         // Validate host name and extract port if present
+        /**
+         *  6. 解析host 以及 port
+         */
         parseHost(hostValueMB);
 
         if (!contentDelimitation) {

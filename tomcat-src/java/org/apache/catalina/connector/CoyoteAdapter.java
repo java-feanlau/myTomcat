@@ -329,7 +329,12 @@ public class CoyoteAdapter implements Adapter {
         try {
             // Parse and set Catalina and configuration specific
             // request parameters
-            // 解析请求参数
+            // todo 重要
+            // 1. 解析请求参数
+            // 2. 解析schema
+            // 3. 解析对应的host container
+            // 4. 解析对应的context container
+            // 5. 解析对应的servlet
             postParseSuccess = postParseRequest(req, request, res, response);
             if (postParseSuccess) {
                 //check valves if we support async
@@ -570,6 +575,9 @@ public class CoyoteAdapter implements Adapter {
         if (req.scheme().isNull()) {
             // Use connector scheme and secure configuration, (defaults to
             // "http" and false respectively)
+            /**
+             * 1. 解析schema
+             */
             req.scheme().setString(connector.getScheme());
             request.setSecure(connector.getSecure());
         } else {
@@ -579,6 +587,9 @@ public class CoyoteAdapter implements Adapter {
 
         // At this point the Host header has been processed.
         // Override if the proxyPort/proxyHost are set
+        /**
+         *  2. 解析代理
+         */
         String proxyName = connector.getProxyName();
         int proxyPort = connector.getProxyPort();
         if (proxyPort != 0) {
@@ -594,7 +605,10 @@ public class CoyoteAdapter implements Adapter {
         if (proxyName != null) {
             req.serverName().setString(proxyName);
         }
-
+        // uri  如: /patcher/dis
+        /**
+         * 3. 解析uri
+         */
         MessageBytes undecodedURI = req.requestURI();
 
         // Check for ping OPTIONS * request
@@ -624,6 +638,9 @@ public class CoyoteAdapter implements Adapter {
             // Parse the path parameters. This will:
             //   - strip out the path parameters
             //   - convert the decodedURI to bytes
+            /**
+             * 4. 解析 请求中参数--path parameter
+             */
             parsePathParameters(req, request);
 
             // URI decoding
@@ -671,6 +688,10 @@ public class CoyoteAdapter implements Adapter {
                 res.action(ActionCode.REQ_LOCAL_NAME_ATTRIBUTE, null);
             }
         } else {
+            // servername localhost
+            /**
+             *  5. 获取此请求的host
+             */
             serverName = req.serverName();
         }
 
@@ -689,6 +710,10 @@ public class CoyoteAdapter implements Adapter {
 
         while (mapRequired) {
             // This will map the the latest version by default
+            // todo 此处会针对uri 解析对应的host context 以及 servlet
+            /**
+             *  6. 解析此请求对应的host  context  以及servlet
+             */
             connector.getService().getMapper().map(serverName, decodedURI,
                     version, request.getMappingData());
 
@@ -709,6 +734,9 @@ public class CoyoteAdapter implements Adapter {
             // Now we have the context, we can parse the session ID from the URL
             // (if any). Need to do this before we redirect in case we need to
             // include the session id in the redirect
+            /**
+             * 解析sessionID
+             */
             String sessionID;
             if (request.getServletContext().getEffectiveSessionTrackingModes()
                     .contains(SessionTrackingMode.URL)) {
@@ -724,6 +752,9 @@ public class CoyoteAdapter implements Adapter {
             }
 
             // Look for session ID in cookies and SSL session
+            /**
+             *  解析sessionID 以及 cookies
+             */
             parseSessionCookiesId(request);
             parseSessionSslId(request);
 
@@ -833,7 +864,7 @@ public class CoyoteAdapter implements Adapter {
             request.getContext().logAccess(request, response, 0, true);
             return false;
         }
-
+        // 用户认证
         doConnectorAuthenticationAuthorization(req, request);
 
         return true;

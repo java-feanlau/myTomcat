@@ -199,6 +199,11 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
 
     /**
      * Initialize the endpoint.
+     * 对endpoint的初始化
+     * 1. 创建severSocketchannel
+     * 2. 绑定地址端口
+     * 3. 初始化ssl
+     * 4.
      */
     @Override
     public void bind() throws Exception {

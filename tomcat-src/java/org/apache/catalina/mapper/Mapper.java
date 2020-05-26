@@ -16,20 +16,7 @@
  */
 package org.apache.catalina.mapper;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.apache.catalina.Context;
-import org.apache.catalina.Host;
-import org.apache.catalina.WebResource;
-import org.apache.catalina.WebResourceRoot;
-import org.apache.catalina.Wrapper;
+import org.apache.catalina.*;
 import org.apache.catalina.servlet4preview.http.MappingMatch;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
@@ -37,6 +24,11 @@ import org.apache.tomcat.util.buf.Ascii;
 import org.apache.tomcat.util.buf.CharChunk;
 import org.apache.tomcat.util.buf.MessageBytes;
 import org.apache.tomcat.util.res.StringManager;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Mapper, which implements the servlet API mapping rules (which are derived
@@ -282,17 +274,20 @@ public final class Mapper {
             ContextVersion newContextVersion = new ContextVersion(version,
                     path, slashCount, context, resources, welcomeResources);
             if (wrappers != null) {
+                // todo 添加mapper到此对应的context
                 addWrappers(newContextVersion, wrappers);
             }
 
             ContextList contextList = mappedHost.contextList;
             MappedContext mappedContext = exactFind(contextList.contexts, path);
             if (mappedContext == null) {
+                //todo 封装context信息, 然后添加到mappedHost.contextList
                 mappedContext = new MappedContext(path, newContextVersion);
                 ContextList newContextList = contextList.addContext(
                         mappedContext, slashCount);
                 if (newContextList != null) {
                     updateContextList(mappedHost, newContextList);
+                    //  保存context及其对应的wrapper信息
                     contextObjectToContextVersionMap.put(context, newContextVersion);
                 }
             } else {
@@ -442,6 +437,7 @@ public final class Mapper {
      */
     private void addWrappers(ContextVersion contextVersion,
             Collection<WrapperMappingInfo> wrappers) {
+        // 遍历wrapper 注册到从context
         for (WrapperMappingInfo wrapper : wrappers) {
             addWrapper(contextVersion, wrapper.getMapping(),
                     wrapper.getWrapper(), wrapper.isJspWildCard(),
@@ -687,6 +683,7 @@ public final class Mapper {
      * @throws IOException if the buffers are too small to hold the results of
      *                     the mapping.
      */
+    // 解析host  context  servlet 根据 uri
     public void map(MessageBytes host, MessageBytes uri, String version,
                     MappingData mappingData) throws IOException {
 
@@ -695,6 +692,9 @@ public final class Mapper {
         }
         host.toChars();
         uri.toChars();
+        /**
+         *  具体的解析动作
+         */
         internalMap(host.getCharChunk(), uri.getCharChunk(), version,
                 mappingData);
     }
@@ -741,7 +741,11 @@ public final class Mapper {
         }
 
         // Virtual host mapping
+        /**
+         *  1. 解析host
+         */
         MappedHost[] hosts = this.hosts;
+        // exactFindIgnoreCase 查找匹配时, 根据host的名字匹配
         MappedHost mappedHost = exactFindIgnoreCase(hosts, host);
         if (mappedHost == null) {
             // Note: Internally, the Mapper does not use the leading * on a
@@ -764,6 +768,7 @@ public final class Mapper {
                 }
             }
         }
+        // 记录匹配到的host
         mappingData.host = mappedHost.object;
 
         if (uri.isNull()) {
@@ -774,6 +779,11 @@ public final class Mapper {
         uri.setLimit(-1);
 
         // Context mapping
+        //
+        /**
+         * 2. 解析context
+         * 根据 uri 如何 context的name去进行匹配,一般情况 context的name就是其path
+         */
         ContextList contextList = mappedHost.contextList;
         MappedContext[] contexts = contextList.contexts;
         int pos = find(contexts, uri);
@@ -818,7 +828,7 @@ public final class Mapper {
         if (context == null) {
             return;
         }
-
+        // 记录匹配到的context的path
         mappingData.contextPath.setString(context.name);
 
         ContextVersion contextVersion = null;
@@ -829,6 +839,7 @@ public final class Mapper {
             for (int i = 0; i < contextObjects.length; i++) {
                 contextObjects[i] = contextVersions[i].object;
             }
+            // 记录匹配到的context
             mappingData.contexts = contextObjects;
             if (version != null) {
                 contextVersion = exactFind(contextVersions, version);
@@ -843,7 +854,11 @@ public final class Mapper {
         mappingData.contextSlashCount = contextVersion.slashCount;
 
         // Wrapper mapping
+        /**
+         * 3. 根据uri去解析 mapping
+         */
         if (!contextVersion.isPaused()) {
+            // 具体解析mapping
             internalMapWrapper(contextVersion, uri, mappingData);
         }
 
@@ -871,10 +886,13 @@ public final class Mapper {
         path.setOffset(servletPath);
 
         // Rule 1 -- Exact Match
+        // 规则1: 精确匹配
         MappedWrapper[] exactWrappers = contextVersion.exactWrappers;
+        // 具体的匹配动作
         internalMapExactWrapper(exactWrappers, path, mappingData);
 
         // Rule 2 -- Prefix Match
+        // 规则2: 前缀匹配
         boolean checkJspWelcomeFiles = false;
         MappedWrapper[] wildcardWrappers = contextVersion.wildcardWrappers;
         if (mappingData.wrapper == null) {
@@ -914,6 +932,7 @@ public final class Mapper {
         }
 
         // Rule 3 -- Extension Match
+        // 规则3: 扩展匹配
         MappedWrapper[] extensionWrappers = contextVersion.extensionWrappers;
         if (mappingData.wrapper == null && !checkJspWelcomeFiles) {
             internalMapExtensionWrapper(extensionWrappers, path, mappingData,

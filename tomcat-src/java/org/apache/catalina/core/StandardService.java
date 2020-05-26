@@ -421,7 +421,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
                 executor.start();
             }
         }
-
+        // todo 重点 重点  此处会记录host  context  servlet这个container的映射关系，并记录到service中的mapper里面
         mapperListener.start();
 
         // Start our defined Connectors second
