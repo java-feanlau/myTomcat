@@ -676,6 +676,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
 
         private void addEvent(PollerEvent event) {
             events.offer(event);
+            // 注册完socket后,就立即唤醒一个selector
             if ( wakeupCounter.incrementAndGet() == 0 ) selector.wakeup();
         }
 
@@ -825,11 +826,14 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
                 try {
                     if (!close) {
                         hasEvents = events();
+                        // wakeupCounter大于0,表示有pollerEvent事件进入
+                        // 那么就selectNow,不会有超时等待; 也就是为了及时处理请求
                         if (wakeupCounter.getAndSet(-1) > 0) {
                             //if we are here, means we have other stuff to do
                             //do a non blocking select
                             keyCount = selector.selectNow();
                         } else {
+                            // 如果到此,说明暂时没有注册的socket
                             keyCount = selector.select(selectorTimeout);
                         }
                         wakeupCounter.set(0);
@@ -850,8 +854,11 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
                     continue;
                 }
                 //either we timed out or we woke up, process events first
+                // 如果之前检测没有事件,那么此处在检测一次
+                // 如果被唤醒,先进行一次事件的处理; 即为了timeout处理,也为了及时对事件响应
                 if ( keyCount == 0 ) hasEvents = (hasEvents | events());
                 // 获取所有可用的key的迭代器
+                // 如果检测没有事件, 则不会对key进行遍历
                 Iterator<SelectionKey> iterator =
                     keyCount > 0 ? selector.selectedKeys().iterator() : null;
                 // Walk through the collection of ready keys and dispatch
