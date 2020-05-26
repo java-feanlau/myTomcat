@@ -870,9 +870,11 @@ public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
 
     // ------------------------------------------------------------- Common code
 
+    // 根据协议创建具体的处理器,来对接收到的scoket进行处理
     @SuppressWarnings("deprecation")
     @Override
     protected Processor createProcessor() {
+        // 此处是创建 Http11Processor 处理器
         Http11Processor processor = new Http11Processor(getMaxHttpHeaderSize(),
                 getAllowHostHeaderMismatch(), getRejectIllegalHeaderName(), getEndpoint(),
                 getMaxTrailerSize(), allowedTrailerHeaders, getMaxExtensionSize(),

@@ -637,7 +637,7 @@ public class Http11Processor extends AbstractProcessor {
         }
     }
 
-
+    // 对socket的处理,解析http header, 封装request 和 response
     @Override
     public SocketState service(SocketWrapperBase<?> socketWrapper)
         throws IOException {
@@ -780,6 +780,7 @@ public class Http11Processor extends AbstractProcessor {
                 try {
                     rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
                     // 前面解析号request 和response后, 调用adapter来进行下一步处理
+                    // todo 这里通过adaptor来进行进一步的处理,之后就会进入容器中进行具体的处理
                     getAdapter().service(request, response);
                     // Handle when the response was committed before a serious
                     // error occurred.  Throwing a ServletException should both

@@ -290,7 +290,7 @@ public class CoyoteAdapter implements Adapter {
         return success;
     }
 
-
+    // adapter 此是请求进入容器处理前的适配器
     @Override
     public void service(org.apache.coyote.Request req, org.apache.coyote.Response res)
             throws Exception {

@@ -602,6 +602,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
             } else {
                 final SelectionKey key = socket.getIOChannel().keyFor(socket.getPoller().getSelector());
                 try {
+                    // 如果socket的对应的key不存在了,则取消此key
                     if (key == null) {
                         // The key was cancelled (e.g. due to socket closure)
                         // and removed from the selector while it was being
@@ -611,6 +612,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
                         socket.socketWrapper.getEndpoint().countDownConnection();
                         ((NioSocketWrapper) socket.socketWrapper).closed = true;
                     } else {
+                        // 存在,则获取此key对应的socketWrapper,设置其下一次的事件为 key.interestOps() | interestOps
                         final NioSocketWrapper socketWrapper = (NioSocketWrapper) key.attachment();
                         if (socketWrapper != null) {
                             //we are registering the key to start with, reset the fairness counter.
@@ -711,7 +713,9 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
             for (int i = 0, size = events.size(); i < size && (pe = events.poll()) != null; i++ ) {
                 result = true;
                 try {
+                    // 此处的run相当于重新注册了socket的感兴趣的事件
                     pe.run();
+                    // 之后复位pollerEvent, 并放置到eventCache中,是为了复用此pollerEvent
                     pe.reset();
                     if (running && !paused) {
                         eventCache.push(pe);
@@ -740,7 +744,10 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
             ka.setSecure(isSSLEnabled());
             ka.setReadTimeout(getConnectionTimeout());
             ka.setWriteTimeout(getConnectionTimeout());
+            // 这里对一个socket注册前, 会先去缓存中看是否有可复用的pollerEvent
             PollerEvent r = eventCache.pop();
+            // 这里可以看到,当socket进行注册时,感兴趣事件是 OP_READ,而第一次注册的事件OP_REGISTER
+            // 那么当下一次此socket准备好时,就会注册op_read事件
             ka.interestOps(SelectionKey.OP_READ);//this is what OP_REGISTER turns into.
             if ( r==null) r = new PollerEvent(socket,ka,OP_REGISTER);
             else r.reset(socket,ka,OP_REGISTER);
