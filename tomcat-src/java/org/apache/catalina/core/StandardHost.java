@@ -51,7 +51,7 @@ public class StandardHost extends ContainerBase implements Host {
     public StandardHost() {
 
         super();
-        // 在创建的时候,就设置了pipeline
+        // 在创建的时候,向pipeline添加组件
         pipeline.setBasic(new StandardHostValve());
 
     }
@@ -686,7 +686,7 @@ public class StandardHost extends ContainerBase implements Host {
         if (!(child instanceof Context))
             throw new IllegalArgumentException
                 (sm.getString("standardHost.notContext"));
-
+        // 给子组件 添加监听器
         child.addLifecycleListener(new MemoryLeakTrackingListener());
 
         // Avoid NPE for case where Context is defined in server.xml with only a

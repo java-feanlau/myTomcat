@@ -50,6 +50,7 @@ public final class Mapper {
      * Array containing the virtual hosts definitions.
      */
     // Package private to facilitate testing
+    // 记录 注册的host的信息
     volatile MappedHost[] hosts = new MappedHost[0];
 
 
@@ -64,6 +65,8 @@ public final class Mapper {
      * Mapping from Context object to Context version to support
      * RequestDispatcher mappings.
      */
+    // 记录此context 对应的 ContextVersion
+    // ContextVersion 中记录了 servlet的映射关系
     private final Map<Context, ContextVersion> contextObjectToContextVersionMap =
             new ConcurrentHashMap<>();
 
@@ -95,9 +98,13 @@ public final class Mapper {
     public synchronized void addHost(String name, String[] aliases,
                                      Host host) {
         name = renameWildcardHost(name);
+        // 存储host的 数组
         MappedHost[] newHosts = new MappedHost[hosts.length + 1];
+        // 封装要 注入的 host
         MappedHost newHost = new MappedHost(name, host);
+        // 把 newHost 插入到 newHosts, 并把原来的hosts中的内容拷贝到 newHosts
         if (insertMap(hosts, newHosts, newHost)) {
+            // 更新容器
             hosts = newHosts;
             if (newHost.name.equals(defaultHostName)) {
                 defaultHost = newHost;
@@ -122,6 +129,7 @@ public final class Mapper {
                 return;
             }
         }
+        // 注册 host的别名
         List<MappedHost> newAliases = new ArrayList<>(aliases.length);
         for (String alias : aliases) {
             alias = renameWildcardHost(alias);
@@ -175,8 +183,9 @@ public final class Mapper {
             realHost.addAlias(newAlias);
         }
     }
-
+    // 注册host的别名
     private synchronized boolean addHostAliasImpl(MappedHost newAlias) {
+        // 看操作,同样是注册到 hosts中
         MappedHost[] newHosts = new MappedHost[hosts.length + 1];
         if (insertMap(hosts, newHosts, newAlias)) {
             hosts = newHosts;
@@ -255,8 +264,9 @@ public final class Mapper {
             WebResourceRoot resources, Collection<WrapperMappingInfo> wrappers) {
 
         hostName = renameWildcardHost(hostName);
-
+        // 精确查找host
         MappedHost mappedHost  = exactFind(hosts, hostName);
+        // 没有找到,则记录起来
         if (mappedHost == null) {
             addHost(hostName, new String[0], host);
             mappedHost = exactFind(hosts, hostName);
@@ -269,6 +279,7 @@ public final class Mapper {
             log.error("No host found: " + hostName);
             return;
         }
+        // 获取 path中/ 的个数
         int slashCount = slashCount(path);
         synchronized (mappedHost) {
             ContextVersion newContextVersion = new ContextVersion(version,
@@ -277,9 +288,12 @@ public final class Mapper {
                 // todo 添加mapper到此对应的context
                 addWrappers(newContextVersion, wrappers);
             }
-
+            // 获取此 host下面的  context
             ContextList contextList = mappedHost.contextList;
+            // 精确查找 context
             MappedContext mappedContext = exactFind(contextList.contexts, path);
+            // 没有找到 context
+            // 则把此context添加到host中
             if (mappedContext == null) {
                 //todo 封装context信息, 然后添加到mappedHost.contextList
                 mappedContext = new MappedContext(path, newContextVersion);
@@ -439,6 +453,7 @@ public final class Mapper {
             Collection<WrapperMappingInfo> wrappers) {
         // 遍历wrapper 注册到从context
         for (WrapperMappingInfo wrapper : wrappers) {
+            // 注册 servlet的映射到  context中
             addWrapper(contextVersion, wrapper.getMapping(),
                     wrapper.getWrapper(), wrapper.isJspWildCard(),
                     wrapper.isResourceOnly());
@@ -1596,7 +1611,7 @@ public final class Mapper {
 
 
     protected static final class MappedHost extends MapElement<Host> {
-
+        // 此主要记录 host下面对应的context
         public volatile ContextList contextList;
 
         /**
@@ -1609,6 +1624,7 @@ public final class Mapper {
          * is available only in the "real" MappedHost. In an alias this field
          * is <code>null</code>.
          */
+        // 记录此host的别名
         private final List<MappedHost> aliases;
 
         /**
@@ -1619,8 +1635,11 @@ public final class Mapper {
          */
         public MappedHost(String name, Host host) {
             super(name, host);
+            // 真正的host
             realHost = this;
+            // 创建一个list,此主要记录此host 对应的context
             contextList = new ContextList();
+            // 存储别名
             aliases = new CopyOnWriteArrayList<>();
         }
 
@@ -1726,8 +1745,11 @@ public final class Mapper {
         public final WebResourceRoot resources;
         public String[] welcomeResources;
         public MappedWrapper defaultWrapper = null;
+        // 精确匹配的wapper 一般是servelt
         public MappedWrapper[] exactWrappers = new MappedWrapper[0];
+        // 正则匹配的wapper 一般是servelt
         public MappedWrapper[] wildcardWrappers = new MappedWrapper[0];
+        // 扩展名匹配的wapper 一般是servelt
         public MappedWrapper[] extensionWrappers = new MappedWrapper[0];
         public int nesting = 0;
         private volatile boolean paused;

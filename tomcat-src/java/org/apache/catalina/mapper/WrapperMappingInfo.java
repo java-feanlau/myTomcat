@@ -30,7 +30,9 @@ public class WrapperMappingInfo {
 
     public WrapperMappingInfo(String mapping, Wrapper wrapper,
             boolean jspWildCard, boolean resourceOnly) {
+        // 映射
         this.mapping = mapping;
+        // 对应servlet
         this.wrapper = wrapper;
         this.jspWildCard = jspWildCard;
         this.resourceOnly = resourceOnly;

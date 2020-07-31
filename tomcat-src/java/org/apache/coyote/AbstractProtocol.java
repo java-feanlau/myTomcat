@@ -75,9 +75,10 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
      * ProtocolHandler implementation (ProtocolHandler using NIO, requires NIO
      * Endpoint etc.).
      */
+    // endpint 主要是 接收连接
     private final AbstractEndpoint<S> endpoint;
 
-
+    // socket处理器
     private Handler<S> handler;
 
 
@@ -93,7 +94,9 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
 
     public AbstractProtocol(AbstractEndpoint<S> endpoint) {
         this.endpoint = endpoint;
+        // 设置socket属性 solinger
         setSoLinger(Constants.DEFAULT_CONNECTION_LINGER);
+        // 设置 tcpNodelay
         setTcpNoDelay(Constants.DEFAULT_TCP_NO_DELAY);
     }
 
@@ -1139,6 +1142,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
          * The background thread that checks async requests and fires the
          * timeout if there has been no activity.
          */
+        // 异步处理的超时处理线程
         @Override
         public void run() {
 

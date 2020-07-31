@@ -136,6 +136,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
     /**
      * The child Containers belonging to this Container, keyed by name.
      */
+    // 记录此 容器的子组件
     protected final HashMap<String, Container> children = new HashMap<>();
 
 
@@ -685,6 +686,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
      * @exception IllegalStateException if this Container does not support
      *  child Containers
      */
+    // 向容器中添加 child
     @Override
     public void addChild(Container child) {
         if (Globals.IS_SECURITY_ENABLED) {
@@ -695,7 +697,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
             addChildInternal(child);
         }
     }
-
+    // 添加child,也就是子组件到内部
     private void addChildInternal(Container child) {
 
         if( log.isDebugEnabled() )
@@ -705,7 +707,9 @@ public abstract class ContainerBase extends LifecycleMBeanBase
                 throw new IllegalArgumentException("addChild:  Child name '" +
                                                    child.getName() +
                                                    "' is not unique");
+            // 子组件记录对应的父容器是谁
             child.setParent(this);  // May throw IAE
+            // 记录子组件
             children.put(child.getName(), child);
         }
 
@@ -861,6 +865,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
     @Override
     protected void initInternal() throws LifecycleException {
         BlockingQueue<Runnable> startStopQueue = new LinkedBlockingQueue<>();
+        // 创建一个线程池
         startStopExecutor = new ThreadPoolExecutor(
                 getStartStopThreadsInternal(),
                 getStartStopThreadsInternal(), 10, TimeUnit.SECONDS,
@@ -894,6 +899,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         }
 
         // Start our child containers, if any
+        // 启动子类组件
         Container children[] = findChildren();
         List<Future<Void>> results = new ArrayList<>();
         for (int i = 0; i < children.length; i++) {
@@ -905,6 +911,8 @@ public abstract class ContainerBase extends LifecycleMBeanBase
 
         for (Future<Void> result : results) {
             try {
+                // 上面看起来是异步操作,不过在此进行结果值的获取
+                // 相当于 异步变同步
                 result.get();
             } catch (Throwable e) {
                 log.error(sm.getString("containerBase.threadedStartFailed"), e);
@@ -921,6 +929,7 @@ public abstract class ContainerBase extends LifecycleMBeanBase
         }
 
         // Start the Valves in our pipeline (including the basic), if any
+        // 启动 pipeline
         if (pipeline instanceof Lifecycle) {
             ((Lifecycle) pipeline).start();
         }

@@ -19,21 +19,6 @@
 package org.apache.catalina.core;
 
 
-import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.management.ObjectName;
-import javax.naming.NamingException;
-import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-
 import org.apache.catalina.Context;
 import org.apache.catalina.Globals;
 import org.apache.catalina.security.SecurityUtil;
@@ -46,6 +31,16 @@ import org.apache.tomcat.util.log.SystemLogHandler;
 import org.apache.tomcat.util.modeler.Registry;
 import org.apache.tomcat.util.modeler.Util;
 import org.apache.tomcat.util.res.StringManager;
+
+import javax.management.ObjectName;
+import javax.naming.NamingException;
+import javax.servlet.Filter;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 
 
 /**
@@ -100,15 +95,19 @@ public final class ApplicationFilterConfig implements FilterConfig, Serializable
             IllegalArgumentException, NoSuchMethodException, SecurityException {
 
         super();
-
+        // 此filter 对应的context
         this.context = context;
+        // 此filter的定义
         this.filterDef = filterDef;
         // Allocate a new filter instance if necessary
         if (filterDef.getFilter() == null) {
             getFilter();
         } else {
+            // 获取定义的filter
             this.filter = filterDef.getFilter();
+            // 实例化filter
             getInstanceManager().newInstance(filter);
+            // 调用 filter的init 方法进行初始化
             initFilter();
         }
     }
@@ -280,6 +279,7 @@ public final class ApplicationFilterConfig implements FilterConfig, Serializable
                 }
             }
         } else {
+            // 调用init方法
             filter.init(this);
         }
 

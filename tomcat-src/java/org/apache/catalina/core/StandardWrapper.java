@@ -101,12 +101,14 @@ public class StandardWrapper extends ContainerBase
     /**
      * The (single) possibly uninitialized instance of this servlet.
      */
+    // servlet 的实例
     protected volatile Servlet instance = null;
 
 
     /**
      * Flag that indicates if this instance has been initialized
      */
+    // 是否初始化了
     protected volatile boolean instanceInitialized = false;
 
 
@@ -114,6 +116,8 @@ public class StandardWrapper extends ContainerBase
      * The load-on-startup order value (negative value means load on
      * first call) for this servlet.
      */
+    // 是否是立即加载
+    // 可以看到默认不是立即加载
     protected int loadOnStartup = -1;
 
 
@@ -128,6 +132,7 @@ public class StandardWrapper extends ContainerBase
      * The initialization parameters for this servlet, keyed by
      * parameter name.
      */
+    // servlet的参数
     protected HashMap<String, String> parameters = new HashMap<>();
 
 
@@ -945,10 +950,12 @@ public class StandardWrapper extends ContainerBase
      *  an exception
      * @exception ServletException if some other loading problem occurs
      */
+    // 记载servlet
     @Override
     public synchronized void load() throws ServletException {
+        // 加载servlet
         instance = loadServlet();
-
+        // 如果还没有初始化,则调用servlet的init 方法
         if (!instanceInitialized) {
             initServlet(instance);
         }
@@ -1006,6 +1013,7 @@ public class StandardWrapper extends ContainerBase
 
             InstanceManager instanceManager = ((StandardContext)getParent()).getInstanceManager();
             try {
+                // 创建  servlet 实例
                 servlet = (Servlet) instanceManager.newInstance(servletClass);
             } catch (ClassCastException e) {
                 unavailable(null);
@@ -1027,7 +1035,7 @@ public class StandardWrapper extends ContainerBase
                 throw new ServletException
                     (sm.getString("standardWrapper.instantiate", servletClass), e);
             }
-
+            // 是否有此 MultipartConfig 注解
             if (multipartConfigElement == null) {
                 MultipartConfig annotation =
                         servlet.getClass().getAnnotation(MultipartConfig.class);
@@ -1043,7 +1051,7 @@ public class StandardWrapper extends ContainerBase
             if (servlet instanceof ContainerServlet) {
                 ((ContainerServlet) servlet).setWrapper(this);
             }
-
+            // 加载的时间
             classLoadTime=(int) (System.currentTimeMillis() -t1);
 
             if (servlet instanceof SingleThreadModel) {
@@ -1052,9 +1060,9 @@ public class StandardWrapper extends ContainerBase
                 }
                 singleThreadModel = true;
             }
-
+            // 调用servlet的init方法
             initServlet(servlet);
-
+            // 发布 load加载 事件
             fireContainerEvent("load", this);
 
             loadTime=System.currentTimeMillis() -t1;
@@ -1082,7 +1090,7 @@ public class StandardWrapper extends ContainerBase
         // NO-OP
     }
 
-
+    // 调用 servlet的init 方法
     private synchronized void initServlet(Servlet servlet)
             throws ServletException {
 
@@ -1542,6 +1550,7 @@ public class StandardWrapper extends ContainerBase
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
      */
+    // standardWrapper的初始化
     @Override
     protected synchronized void startInternal() throws LifecycleException {
 

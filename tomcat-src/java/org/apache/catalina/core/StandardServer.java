@@ -118,6 +118,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
     /**
      * The set of Services associated with this Server.
      */
+    // 记录service
     private Service services[] = new Service[0];
     private final Object servicesLock = new Object();
 
@@ -332,9 +333,9 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
      */
     @Override
     public void addService(Service service) {
-
+        // 设置service 对应的 server
         service.setServer(this);
-
+        // 记录service 到此server中
         synchronized (servicesLock) {
             // 把service存放到services数组中
             Service results[] = new Service[services.length + 1];
@@ -352,6 +353,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
             }
 
             // Report this property change to interested listeners
+            // 发布事件到  监听器中
             support.firePropertyChange("service", null, service);
         }
 
@@ -747,6 +749,7 @@ public final class StandardServer extends LifecycleMBeanBase implements Server {
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
      */
+    // server的启动
     @Override
     protected void startInternal() throws LifecycleException {
 

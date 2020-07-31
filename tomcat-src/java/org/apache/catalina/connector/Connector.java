@@ -68,18 +68,21 @@ public class Connector extends LifecycleMBeanBase  {
     public Connector() {
         this(null);
     }
-
+    // connector 的创建
     public Connector(String protocol) {
         setProtocol(protocol);
         // Instantiate protocol handler
         ProtocolHandler p = null;
         try {
+            // protocolHandlerClassName ="org.apache.coyote.http11.Http11NioProtocol
+            // 反射创建 Nio
             Class<?> clazz = Class.forName(protocolHandlerClassName);
             p = (ProtocolHandler) clazz.getConstructor().newInstance();
         } catch (Exception e) {
             log.error(sm.getString(
                     "coyoteConnector.protocolHandlerInstantiationFailed"), e);
         } finally {
+            // 记录创建的 handler
             this.protocolHandler = p;
         }
 
@@ -958,14 +961,16 @@ public class Connector extends LifecycleMBeanBase  {
         }
     }
 
-
+    // connector的初始化
     @Override
     protected void initInternal() throws LifecycleException {
 
         super.initInternal();
 
         // Initialize adapter
+        // 创建一个 adapter,此适配器 主要是读取socket中的http的协议信息
         adapter = new CoyoteAdapter(this);
+        // 记录适配器
         protocolHandler.setAdapter(adapter);
 
         // Make sure parseBodyMethodsSet has a default
@@ -977,10 +982,12 @@ public class Connector extends LifecycleMBeanBase  {
             throw new LifecycleException(sm.getString("coyoteConnector.protocolHandlerNoApr",
                     getProtocolHandlerClassName()));
         }
+
         if (AprLifecycleListener.isAprAvailable() && AprLifecycleListener.getUseOpenSSL() &&
                 protocolHandler instanceof AbstractHttp11JsseProtocol) {
             AbstractHttp11JsseProtocol<?> jsseProtocolHandler =
                     (AbstractHttp11JsseProtocol<?>) protocolHandler;
+            // 如果使能 ssl,则配置 ssl相关属性
             if (jsseProtocolHandler.isSSLEnabled() &&
                     jsseProtocolHandler.getSslImplementationName() == null) {
                 // OpenSSL is compatible with the JSSE configuration, so use it if APR is available

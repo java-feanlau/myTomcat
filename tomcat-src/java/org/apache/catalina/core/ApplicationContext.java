@@ -176,6 +176,7 @@ public class ApplicationContext implements org.apache.catalina.servlet4preview.S
     /**
      * The merged context initialization parameters for this Context.
      */
+    // 记录此applicationContext的初始化参数
     private final ConcurrentMap<String,String> parameters = new ConcurrentHashMap<>();
 
 
@@ -1068,7 +1069,7 @@ public class ApplicationContext implements org.apache.catalina.servlet4preview.S
         this.sessionTrackingModes = sessionTrackingModes;
     }
 
-
+    // 设置此applicationContext的初始化参数
     @Override
     public boolean setInitParameter(String name, String value) {
         // Name cannot be null
@@ -1080,7 +1081,7 @@ public class ApplicationContext implements org.apache.catalina.servlet4preview.S
                     sm.getString("applicationContext.setInitParam.ise",
                             getContextPath()));
         }
-
+        // 记录初始化参数
         return parameters.putIfAbsent(name, value) == null;
     }
 

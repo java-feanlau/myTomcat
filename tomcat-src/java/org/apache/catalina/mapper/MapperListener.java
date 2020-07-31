@@ -48,6 +48,7 @@ public class MapperListener extends LifecycleMBeanBase
     /**
      * Associated service
      */
+    // 记录此listener 注册的service
     private final Service service;
 
 
@@ -85,14 +86,14 @@ public class MapperListener extends LifecycleMBeanBase
     public void startInternal() throws LifecycleException {
 
         setState(LifecycleState.STARTING);
-
+        // 获取此 mapperListener 注册的service 对应的 engine
         Engine engine = service.getContainer();
         if (engine == null) {
             return;
         }
 
         findDefaultHost();
-        // 给engine及其子容器 也添加上次listener
+        // 给engine及其子容器 也添加上此listener
         addListeners(engine);
         // 找到engine的host, 并注册其信息
         Container[] conHosts = engine.findChildren();
@@ -251,8 +252,9 @@ public class MapperListener extends LifecycleMBeanBase
     // ------------------------------------------------------ Protected Methods
 
     private void findDefaultHost() {
-
+        // 获取此server对应的engine
         Engine engine = service.getContainer();
+        //  获取此engine对应的默认的 host
         String defaultHost = engine.getDefaultHost();
 
         boolean found = false;
@@ -293,6 +295,8 @@ public class MapperListener extends LifecycleMBeanBase
         // 获取host的别名
         String[] aliases = host.findAliases();
         // 把host信息记录到 hosts
+        // 此中的mapper是由 service中传递进来的
+        // 也就是说,此注册完成后,service也可以使用其中的注册信息
         mapper.addHost(host.getName(), aliases, host);
         // 把host对应的子 context容器也进行注册保存
         for (Container container : host.findChildren()) {
@@ -355,15 +359,18 @@ public class MapperListener extends LifecycleMBeanBase
     /**
      * Register context.
      */
+    // 注册context到 service中的mapper field中
     private void registerContext(Context context) {
-
+        // 获取 contextPath
         String contextPath = context.getPath();
         if ("/".equals(contextPath)) {
             contextPath = "";
         }
+        // 获取此context的host
         Host host = (Host)context.getParent();
-
+        // 获取资源
         WebResourceRoot resources = context.getResources();
+        // 查找 welcome的servlet
         String[] welcomeFiles = context.findWelcomeFiles();
         List<WrapperMappingInfo> wrappers = new ArrayList<>();
         /**
@@ -377,7 +384,7 @@ public class MapperListener extends LifecycleMBeanBase
                         container.getName(), contextPath, service));
             }
         }
-
+        // 注册context到mapper中
         mapper.addContextVersion(host.getName(), host, contextPath,
                 context.getWebappVersion(), context, welcomeFiles, resources,
                 wrappers);
@@ -451,8 +458,10 @@ public class MapperListener extends LifecycleMBeanBase
      * @param wrapper
      * @param wrappers
      */
+    // 记录 context中的 servlet的映射信息
     private void prepareWrapperMappingInfo(Context context, Wrapper wrapper,
             List<WrapperMappingInfo> wrappers) {
+        // servlet的 名字
         String wrapperName = wrapper.getName();
         boolean resourceOnly = context.isResourceOnlyServlet(wrapperName);
         // 找到此wrapper对应哪些mapping

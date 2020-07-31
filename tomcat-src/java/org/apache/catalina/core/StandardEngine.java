@@ -48,10 +48,11 @@ public class StandardEngine extends ContainerBase implements Engine {
     /**
      * Create a new StandardEngine component with the default basic Valve.
      */
+    // 创建
     public StandardEngine() {
 
         super();
-        // 添加pipeline
+        // 向pipeline添加组件 StandardEngineValve
         pipeline.setBasic(new StandardEngineValve());
         /* Set the jmvRoute using the system property jvmRoute */
         try {
@@ -218,7 +219,7 @@ public class StandardEngine extends ContainerBase implements Engine {
 
     }
 
-
+    // engine的初始化
     @Override
     protected void initInternal() throws LifecycleException {
         // Ensure that a Realm is present before any attempt is made to start

@@ -73,6 +73,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     /**
      * The set of Connectors associated with this Service.
      */
+    // 记录此service 中的connector
     protected Connector connectors[] = new Connector[0];
     private final Object connectorsLock = new Object();
 
@@ -88,6 +89,8 @@ public class StandardService extends LifecycleMBeanBase implements Service {
     /**
      * Mapper.
      */
+    // 此mapper非常重要
+    // 此中记录了 host  context servlet的映射关系
     protected final Mapper mapper = new Mapper();
 
 
@@ -110,7 +113,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         return engine;
     }
 
-
+    // 设置 service 对应的container
     @Override
     public void setContainer(Engine engine) {
         Engine oldEngine = this.engine;
@@ -119,6 +122,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
         }
         this.engine = engine;
         if (this.engine != null) {
+            // engine 记录其对应的service
             this.engine.setService(this);
         }
         if (getState().isAvailable()) {
@@ -402,6 +406,10 @@ public class StandardService extends LifecycleMBeanBase implements Service {
      * @exception LifecycleException if this component detects a fatal error
      *  that prevents this component from being used
      */
+    // service的启动
+    // 1. engine 的启动
+    // 2. mapperListener 的启动
+    // 3. connector的启动
     @Override
     protected void startInternal() throws LifecycleException {
 
@@ -518,6 +526,7 @@ public class StandardService extends LifecycleMBeanBase implements Service {
      * Invoke a pre-startup initialization. This is used to allow connectors
      * to bind to restricted ports under Unix operating environments.
      */
+    // service的初始化操作
     @Override
     protected void initInternal() throws LifecycleException {
         // 同样是吧此service注册到jmx中

@@ -388,8 +388,11 @@ public class Tomcat {
      * @throws LifecycleException Init error
      */
     public void init() throws LifecycleException {
+        // 这里获取server,如果还没有创建,在这里就会进行创建
         getServer();
+        // 创建connector
         getConnector();
+        // 从server开始进行 初始化
         server.init();
     }
 
@@ -466,12 +469,16 @@ public class Tomcat {
      *
      * @return A connector object that can be customized
      */
+    // 获取连接器
     public Connector getConnector() {
+        // 这里获取service, 如果没有service呢,也会进行创建
         Service service = getService();
+        // 从server中查找是否有 connector
         if (service.findConnectors().length > 0) {
+            // 如果存在的话,返回connector的第一个
             return service.findConnectors()[0];
         }
-
+        // 是否已经创建了默认的connector
         if (defaultConnectorCreated) {
             return null;
         }
@@ -483,6 +490,7 @@ public class Tomcat {
         Connector connector = new Connector("HTTP/1.1");
         connector.setPort(port);
         service.addConnector(connector);
+        // 已经创建了connector,更新此标志
         defaultConnectorCreated = true;
         return connector;
     }
@@ -529,7 +537,7 @@ public class Tomcat {
             engine.addChild(host);
         }
     }
-
+    // 获取host, 如果没有就创建一个
     public Host getHost() {
         // 获取engine,如果没有就创建
         Engine engine = getEngine();
@@ -538,9 +546,10 @@ public class Tomcat {
         if (engine.findChildren().length > 0) {
             return (Host) engine.findChildren()[0];
         }
-        //
+        // 创建 host
         Host host = new StandardHost();
         host.setName(hostname);
+        // 记录其此 host
         getEngine().addChild(host);
         return host;
     }
@@ -558,12 +567,13 @@ public class Tomcat {
         if (service.getContainer() != null) {
             return service.getContainer();
         }
-        //
+        // 创建 engine
         Engine engine = new StandardEngine();
         engine.setName( "Tomcat" );
         engine.setDefaultHost(hostname);
         // createDefaultRealm 创建realm,用于用户的认证
         engine.setRealm(createDefaultRealm());
+        // service 记录 engine
         service.setContainer(engine);
         return engine;
     }
@@ -573,6 +583,7 @@ public class Tomcat {
      * customizations. JNDI is disabled by default.
      * @return The Server
      */
+    // 获取StandardServer ，没有就进行创建
     public Server getServer() {
 
         if (server != null) {
@@ -615,11 +626,14 @@ public class Tomcat {
      * @return the deployed context
      * @see #addContext(String, String)
      */
+    // 添加一个context到容器中
     public Context addContext(Host host, String contextPath, String contextName,
             String dir) {
         // 设置log的级别
         silence(host, contextName);
+        // 根据给定的 contextPath,来创建一个context
         Context ctx = createContext(host, contextPath);
+        // 设置context 的属性
         ctx.setName(contextName);
         ctx.setPath(contextPath);
         ctx.setDocBase(dir);
@@ -628,6 +642,7 @@ public class Tomcat {
         if (host == null) {
             getHost().addChild(ctx);
         } else {
+            // 添加context到 host中
             host.addChild(ctx);
         }
         return ctx;
@@ -768,21 +783,25 @@ public class Tomcat {
 
         };
     }
-
+    // 初始化 catalina.base 目录
     protected void initBaseDir() {
+        // 从环境中获取 catalina.home 的值
         String catalinaHome = System.getProperty(Globals.CATALINA_HOME_PROP);
+        // 如果没有设置basedir,则从环境变量catalina.base中获取
         if (basedir == null) {
             basedir = System.getProperty(Globals.CATALINA_BASE_PROP);
         }
+        // 如果都没有,那么basedir = catalinaHome
         if (basedir == null) {
             basedir = catalinaHome;
         }
+        // 如果还没有 basedir, 那么basedir 就在 user.dir 创建  tomcat. + port
         if (basedir == null) {
             // Create a temp dir.
             basedir = System.getProperty("user.dir") +
                 "/tomcat." + port;
         }
-
+        // 创建文件夹 tomcat. + port,如 tomcat.8080
         File baseFile = new File(basedir);
         baseFile.mkdirs();
         try {
@@ -790,10 +809,13 @@ public class Tomcat {
         } catch (IOException e) {
             baseFile = baseFile.getAbsoluteFile();
         }
+        // 设置catalina.base
         server.setCatalinaBase(baseFile);
+        // 设置环境变量中 catalina.base的值
         System.setProperty(Globals.CATALINA_BASE_PROP, baseFile.getPath());
+        // 记录创建的 catalina.base的值,作为 basedir
         basedir = baseFile.getPath();
-
+        // 设置catalina.home的值
         if (catalinaHome == null) {
             server.setCatalinaHome(baseFile);
         } else {
@@ -806,6 +828,7 @@ public class Tomcat {
             }
             server.setCatalinaHome(homeFile);
         }
+        // 设置环境变量中的 catalina.home的值
         System.setProperty(Globals.CATALINA_HOME_PROP,
                 server.getCatalinaHome().getPath());
     }
@@ -894,6 +917,7 @@ public class Tomcat {
      *            path of the webapp which should get the {@link Context}
      * @return newly created {@link Context}
      */
+    // 创建context
     private Context createContext(Host host, String url) {
         // 默认就是创建StandardContext
         String contextClass = StandardContext.class.getName();
@@ -1071,13 +1095,16 @@ public class Tomcat {
                 singleThreadModel = true;
                 instancePool = new Stack<>();
             }
+            // 是否支持异步
             this.asyncSupported = hasAsync(existing);
         }
 
         private static boolean hasAsync(Servlet existing) {
             boolean result = false;
             Class<?> clazz = existing.getClass();
+            // 查看是否有注解
             WebServlet ws = clazz.getAnnotation(WebServlet.class);
+            // 根据注解属性 boolean asyncSupported() 来检测是否支持异步
             if (ws != null) {
                 result = ws.asyncSupported();
             }

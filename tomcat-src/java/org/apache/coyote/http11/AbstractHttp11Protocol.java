@@ -16,23 +16,7 @@
  */
 package org.apache.coyote.http11;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import javax.servlet.http.HttpUpgradeHandler;
-
-import org.apache.coyote.AbstractProtocol;
-import org.apache.coyote.CompressionConfig;
-import org.apache.coyote.Processor;
-import org.apache.coyote.UpgradeProtocol;
-import org.apache.coyote.UpgradeToken;
+import org.apache.coyote.*;
 import org.apache.coyote.http11.upgrade.InternalHttpUpgradeHandler;
 import org.apache.coyote.http11.upgrade.UpgradeProcessorExternal;
 import org.apache.coyote.http11.upgrade.UpgradeProcessorInternal;
@@ -41,6 +25,10 @@ import org.apache.tomcat.util.net.AbstractEndpoint;
 import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.tomcat.util.net.SocketWrapperBase;
 import org.apache.tomcat.util.res.StringManager;
+
+import javax.servlet.http.HttpUpgradeHandler;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
 
@@ -52,13 +40,17 @@ public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
 
     public AbstractHttp11Protocol(AbstractEndpoint<S> endpoint) {
         super(endpoint);
+        //  设置连接超时
         setConnectionTimeout(Constants.DEFAULT_CONNECTION_TIMEOUT);
+        // 一协议处理器
         ConnectionHandler<S> cHandler = new ConnectionHandler<>(this);
+        // 记录处理器
         setHandler(cHandler);
+        // 设置endpoint的处理器
         getEndpoint().setHandler(cHandler);
     }
 
-
+    // protocol 的初始化
     @Override
     public void init() throws Exception {
         for (UpgradeProtocol upgradeProtocol : upgradeProtocols) {

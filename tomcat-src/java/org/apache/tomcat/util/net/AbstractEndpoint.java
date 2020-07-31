@@ -181,6 +181,7 @@ public abstract class AbstractEndpoint<S> {
     /**
      * Threads used to accept new connections and pass them to worker threads.
      */
+    // 存储socket接收线程
     protected Acceptor[] acceptors;
 
     /**
@@ -472,6 +473,7 @@ public abstract class AbstractEndpoint<S> {
     /**
      * External Executor based thread pool.
      */
+    // 线程池 用于处理请求
     private Executor executor = null;
     public void setExecutor(Executor executor) {
         this.executor = executor;
@@ -877,9 +879,10 @@ public abstract class AbstractEndpoint<S> {
         return paused;
     }
 
-
+    // 创建executor
     public void createExecutor() {
         internalExecutor = true;
+        // LinkedBlockingQueue
         TaskQueue taskqueue = new TaskQueue();
         TaskThreadFactory tf = new TaskThreadFactory(getName() + "-exec-", daemon, getThreadPriority());
         executor = new ThreadPoolExecutor(getMinSpareThreads(), getMaxThreads(), 60, TimeUnit.SECONDS,taskqueue, tf);
@@ -1190,8 +1193,9 @@ public abstract class AbstractEndpoint<S> {
         // 此处是NioEndpoint
         startInternal();
     }
-
+    // 开启接收线程
     protected final void startAcceptorThreads() {
+        // 默认的接收线程数 为1
         int count = getAcceptorThreadCount();
         acceptors = new Acceptor[count];
         // 创建并启动接收器

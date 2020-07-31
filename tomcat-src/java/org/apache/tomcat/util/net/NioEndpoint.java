@@ -237,6 +237,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
         setStopLatch(new CountDownLatch(pollerThreadCount));
 
         // Initialize SSL if needed
+        // ssl的初始化
         initialiseSsl();
 
         selectorPool.open();
@@ -245,13 +246,15 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
     /**
      * Start the NIO endpoint, creating acceptor, poller threads.
      */
+    // socket接收的 后台线程
     @Override
     public void startInternal() throws Exception {
 
         if (!running) {
             running = true;
             paused = false;
-
+            // 默认长度大小为 128
+            // 三个缓存的 列表都是 128
             processorCache = new SynchronizedStack<>(SynchronizedStack.DEFAULT_SIZE,
                     socketProperties.getProcessorCache());
             eventCache = new SynchronizedStack<>(SynchronizedStack.DEFAULT_SIZE,
@@ -260,15 +263,18 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
                     socketProperties.getBufferPool());
 
             // Create worker collection
+            // 创建  executor
             if ( getExecutor() == null ) {
                 createExecutor();
             }
-
+            // 限流使用
+            // 变相的限制 连接数
             initializeConnectionLatch();
 
             // Start poller threads
             // 控制pollers线程数量的是
             // pollerThreadCount = Math.min(2,Runtime.getRuntime().availableProcessors())
+            // poller 用于进行 读写处理
             pollers = new Poller[getPollerThreadCount()];
             for (int i=0; i<pollers.length; i++) {
                 // 看一下poller的run方法
@@ -280,7 +286,7 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
                 pollerThread.setDaemon(false);
                 pollerThread.start();
             }
-
+            // 接收器 用于接收
             startAcceptorThreads();
         }
     }
@@ -475,12 +481,13 @@ public class NioEndpoint extends AbstractJsseEndpoint<NioChannel> {
 
                 try {
                     //if we have reached max connections, wait
+                    // 限制连接数
                     countUpOrAwaitConnection();
 
                     SocketChannel socket = null;
                     try {
                         // Accept the next incoming connection from the server
-                        // socket
+                        // socket  接收连接
                         socket = serverSock.accept();
                     } catch (IOException ioe) {
                         // We didn't get a socket
