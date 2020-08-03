@@ -127,6 +127,7 @@ public final class ApplicationFilterChain implements FilterChain {
      * @exception IOException if an input/output error occurs
      * @exception ServletException if a servlet exception occurs
      */
+    // 执行链的执行
     @Override
     public void doFilter(ServletRequest request, ServletResponse response)
         throws IOException, ServletException {
@@ -167,6 +168,7 @@ public final class ApplicationFilterChain implements FilterChain {
         throws IOException, ServletException {
 
         // Call the next filter if there is one
+        // 此处开始调用 filter对请求进行处理
         if (pos < n) {
             ApplicationFilterConfig filterConfig = filters[pos++];
             try {
@@ -186,6 +188,7 @@ public final class ApplicationFilterChain implements FilterChain {
                     SecurityUtil.doAsPrivilege ("doFilter", filter, classType, args, principal);
                 } else {
                     // 调用下一个filter
+                    // 具体的过滤 处理
                     filter.doFilter(request, response, this);
                 }
             } catch (IOException | ServletException | RuntimeException e) {

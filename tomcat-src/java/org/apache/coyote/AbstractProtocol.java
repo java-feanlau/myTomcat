@@ -677,7 +677,9 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
         private final AbstractProtocol<S> proto;
         private final RequestGroupInfo global = new RequestGroupInfo();
         private final AtomicLong registerCount = new AtomicLong(0);
+        // 记录socket和 processor的对应关系
         private final Map<S,Processor> connections = new ConcurrentHashMap<>();
+        // 记录所有的processor,此主要是循环利用 processor
         private final RecycledProcessors recycledProcessors = new RecycledProcessors(this);
 
         public ConnectionHandler(AbstractProtocol<S> proto) {
@@ -713,7 +715,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                 // Nothing to do. Socket has been closed.
                 return SocketState.CLOSED;
             }
-
+            // 获取 接收到的socket
             S socket = wrapper.getSocket();
 
             Processor processor = connections.get(socket);
@@ -791,6 +793,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                 }
                 if (processor == null) {
                     // 如果缓存中没有处理器, 那么就创建一个处理器来进行处理
+                    // 创建 Http11Processor, 来对socket进行进一步的处理
                     processor = getProtocol().createProcessor();
                     // 注册processor到jmx
                     register(processor);
@@ -800,11 +803,14 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                         wrapper.getSslSupport(getProtocol().getClientCertProvider()));
 
                 // Associate the processor with the connection
+                // 记录创建的 processor
                 connections.put(socket, processor);
 
                 SocketState state = SocketState.CLOSED;
                 do {
                     // 对请求进行处理
+                    // 处理器的关键请求
+                    // 关键代码
                     state = processor.process(wrapper, status);
 
                     if (state == SocketState.UPGRADING) {

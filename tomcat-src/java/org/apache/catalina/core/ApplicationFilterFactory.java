@@ -54,10 +54,12 @@ public final class ApplicationFilterFactory {
             Wrapper wrapper, Servlet servlet) {
 
         // If there is no servlet to execute, return null
+        // 如果不存在 servlet,则直接返回
         if (servlet == null)
             return null;
 
         // Create and initialize a filter chain object
+        // 创建执行链
         ApplicationFilterChain filterChain = null;
         if (request instanceof Request) {
             Request req = (Request) request;
@@ -75,7 +77,7 @@ public final class ApplicationFilterFactory {
             // Request dispatcher in use
             filterChain = new ApplicationFilterChain();
         }
-
+        // 记录servlet 到此执行链
         filterChain.setServlet(servlet);
         filterChain.setServletSupportsAsync(wrapper.isAsyncSupported());
 
@@ -91,16 +93,19 @@ public final class ApplicationFilterFactory {
             return filterChain;
 
         // Acquire the information we will need to match filter mappings
+        // 获取 dispatcher 类型
         DispatcherType dispatcher =
                 (DispatcherType) request.getAttribute(Globals.DISPATCHER_TYPE_ATTR);
-
+        // 获取 请求的路径
         String requestPath = null;
         Object attribute = request.getAttribute(Globals.DISPATCHER_REQUEST_PATH_ATTR);
         if (attribute != null){
+            // 请求路径
             requestPath = attribute.toString();
         }
 
         String servletName = wrapper.getName();
+        // 下面两步,主要是添加过滤器到  执行链中
 
         // Add the relevant path-mapped filters to this filter chain
         // 遍历此context中所有的filterMap,来找到匹配当前requet的fileter
@@ -118,10 +123,12 @@ public final class ApplicationFilterFactory {
                 // FIXME - log configuration problem
                 continue;
             }
+            // 有匹配的则,记录此 filter到执行链中
             filterChain.addFilter(filterConfig);
         }
 
         // Add filters that match on servlet name second
+        // 把匹配 servlet name的过滤器 也添加进来
         for (int i = 0; i < filterMaps.length; i++) {
             if (!matchDispatcher(filterMaps[i] ,dispatcher)) {
                 continue;

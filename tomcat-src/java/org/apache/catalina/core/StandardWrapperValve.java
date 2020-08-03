@@ -84,6 +84,7 @@ final class StandardWrapperValve
      * @exception IOException if an input/output error occurred
      * @exception ServletException if a servlet error occurred
      */
+    // standardWrapper pipeline中第一个处理器
     @Override
     public final void invoke(Request request, Response response)
         throws IOException, ServletException {
@@ -128,6 +129,7 @@ final class StandardWrapperValve
         // Allocate a servlet instance to process this request
         try {
             if (!unavailable) {
+                // servlet的加载
                 servlet = wrapper.allocate();
             }
         } catch (UnavailableException e) {
@@ -158,11 +160,13 @@ final class StandardWrapperValve
             exception(request, response, e);
             servlet = null;
         }
-
+        // 获取请求的路径
         MessageBytes requestPathMB = request.getRequestPathMB();
         DispatcherType dispatcherType = DispatcherType.REQUEST;
         if (request.getDispatcherType()==DispatcherType.ASYNC) dispatcherType = DispatcherType.ASYNC;
+        // 记录此request的diapatcher的类型, DispatcherType.ASYNC 或 DispatcherType.REQUEST
         request.setAttribute(Globals.DISPATCHER_TYPE_ATTR,dispatcherType);
+        // 记录请求路径到  request的属性中，key为DISPATCHER_REQUEST_PATH_ATTR
         request.setAttribute(Globals.DISPATCHER_REQUEST_PATH_ATTR,
                 requestPathMB);
         // Create the filter chain for this request
@@ -182,6 +186,8 @@ final class StandardWrapperValve
                             request.getAsyncContextInternal().doInternalDispatch();
                         } else {
                             // 开始执行方法,最后执行到servlet
+                            // 从过滤器开始执行,最后执行到 servlet
+                            // 重点 重点
                             filterChain.doFilter(request.getRequest(),
                                     response.getResponse());
                         }
@@ -256,12 +262,14 @@ final class StandardWrapperValve
 
         // Release the filter chain (if any) for this request
         if (filterChain != null) {
+            // 过滤器链的释放
             filterChain.release();
         }
 
         // Deallocate the allocated servlet instance
         try {
             if (servlet != null) {
+                // 如果servlet没有实现SingleThreadModel  则把servlet添加到 instancePool,后续继续使用
                 wrapper.deallocate(servlet);
             }
         } catch (Throwable e) {
@@ -279,6 +287,8 @@ final class StandardWrapperValve
         try {
             if ((servlet != null) &&
                 (wrapper.getAvailable() == Long.MAX_VALUE)) {
+                // 销毁servlet
+                // 调用其 destory
                 wrapper.unload();
             }
         } catch (Throwable e) {

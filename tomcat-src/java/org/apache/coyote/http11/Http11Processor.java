@@ -207,14 +207,14 @@ public class Http11Processor extends AbstractProcessor {
             Set<String> allowedTrailerHeaders, int maxExtensionSize, int maxSwallowSize,
             Map<String,UpgradeProtocol> httpUpgradeProtocols, boolean sendReasonPhrase,
             String relaxedPathChars, String relaxedQueryChars) {
-
+        // 记录endpoint,并在父类中创建了 request, response
         super(endpoint);
 
         httpParser = new HttpParser(relaxedPathChars, relaxedQueryChars);
-
+        // 输入缓冲区
         inputBuffer = new Http11InputBuffer(request, maxHttpHeaderSize, rejectIllegalHeaderName, httpParser);
         request.setInputBuffer(inputBuffer);
-
+        // 输出缓冲区
         outputBuffer = new Http11OutputBuffer(response, maxHttpHeaderSize, sendReasonPhrase);
         response.setOutputBuffer(outputBuffer);
 
@@ -650,6 +650,7 @@ public class Http11Processor extends AbstractProcessor {
         outputBuffer.init(socketWrapper);
 
         // Flags
+        // 可见默认是 keepalive
         keepAlive = true;
         openSocket = false;
         readComplete = true;
@@ -857,7 +858,7 @@ public class Http11Processor extends AbstractProcessor {
             }
 
             rp.setStage(org.apache.coyote.Constants.STAGE_KEEPALIVE);
-
+            // 发送文件
             sendfileState = processSendfile(socketWrapper);
         }
 

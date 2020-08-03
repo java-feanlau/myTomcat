@@ -259,6 +259,7 @@ public final class Mapper {
      * @param resources Static resources of the context
      * @param wrappers Information on wrapper mappings
      */
+    // 注册context到 mapper中
     public void addContextVersion(String hostName, Host host, String path,
             String version, Context context, String[] welcomeResources,
             WebResourceRoot resources, Collection<WrapperMappingInfo> wrappers) {
@@ -449,11 +450,16 @@ public final class Mapper {
      * @param contextVersion The context to which to add the wrappers
      * @param wrappers Information on wrapper mappings
      */
+    // 添加  wrapper到context中
     private void addWrappers(ContextVersion contextVersion,
             Collection<WrapperMappingInfo> wrappers) {
         // 遍历wrapper 注册到从context
         for (WrapperMappingInfo wrapper : wrappers) {
             // 注册 servlet的映射到  context中
+            // wrapper.getMapping()  获取wrapper的映射路径
+            // wrapper.getWrapper()  具体的servlet
+            // wrapper.isJspWildCard()  是否是jsp的正则
+            // wrapper.isResourceOnly()  是否只是 资源
             addWrapper(contextVersion, wrapper.getMapping(),
                     wrapper.getWrapper(), wrapper.isJspWildCard(),
                     wrapper.isResourceOnly());
@@ -475,6 +481,7 @@ public final class Mapper {
             Wrapper wrapper, boolean jspWildCard, boolean resourceOnly) {
 
         synchronized (context) {
+            // 如果匹配路径是以  /*  结束,则 表示是 正则匹配,添加到 wildcardWrappers
             if (path.endsWith("/*")) {
                 // Wildcard wrapper
                 String name = path.substring(0, path.length() - 2);
@@ -489,6 +496,7 @@ public final class Mapper {
                         context.nesting = slashCount;
                     }
                 }
+                // 如果是以 *. 开始,那么是扩展匹配, 记录到  extensionWrappers
             } else if (path.startsWith("*.")) {
                 // Extension wrapper
                 String name = path.substring(2);
@@ -500,6 +508,7 @@ public final class Mapper {
                 if (insertMap(oldWrappers, newWrappers, newWrapper)) {
                     context.extensionWrappers = newWrappers;
                 }
+                // 如果path和 / 相等, 那么设置为默认的 wrapper
             } else if (path.equals("/")) {
                 // Default wrapper
                 MappedWrapper newWrapper = new MappedWrapper("", wrapper,
@@ -507,6 +516,8 @@ public final class Mapper {
                 context.defaultWrapper = newWrapper;
             } else {
                 // Exact wrapper
+                // 否则就属于 完全匹配
+                // 完全匹配的话 则把此wrapper添加到 exactWrappers中
                 final String name;
                 if (path.length() == 0) {
                     // Special case for the Context Root mapping which is

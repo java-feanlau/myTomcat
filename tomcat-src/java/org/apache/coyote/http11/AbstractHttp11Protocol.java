@@ -872,16 +872,23 @@ public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
                 getMaxTrailerSize(), allowedTrailerHeaders, getMaxExtensionSize(),
                 getMaxSwallowSize(), httpUpgradeProtocols, getSendReasonPhrase(),
                 relaxedPathChars, relaxedQueryChars);
+        // 设置 adaptor
         processor.setAdapter(getAdapter());
+        // 最大 keepAlive的请求数量
         processor.setMaxKeepAliveRequests(getMaxKeepAliveRequests());
+        // upload的 超时时间
         processor.setConnectionUploadTimeout(getConnectionUploadTimeout());
+        //
         processor.setDisableUploadTimeout(getDisableUploadTimeout());
+        // 设置压缩的最下大小
         processor.setCompressionMinSize(getCompressionMinSize());
+        // 设置压缩
         processor.setCompression(getCompression());
         processor.setNoCompressionUserAgents(getNoCompressionUserAgents());
         processor.setCompressibleMimeTypes(getCompressibleMimeTypes());
         processor.setRestrictedUserAgents(getRestrictedUserAgents());
         processor.setMaxSavePostSize(getMaxSavePostSize());
+        // 设置此 processor 对应的server
         processor.setServer(getServer());
         processor.setServerRemoveAppProvidedValues(getServerRemoveAppProvidedValues());
         return processor;

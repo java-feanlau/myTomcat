@@ -73,6 +73,7 @@ final class StandardHostValve extends ValveBase {
     }
 
     //------------------------------------------------------ Constructor
+    // 默认支持是支持 异步处理
     public StandardHostValve() {
         super(true);
     }
@@ -100,16 +101,18 @@ final class StandardHostValve extends ValveBase {
      * @exception IOException if an input/output error occurred
      * @exception ServletException if a servlet error occurred
      */
+    // standardHost pipeline中的 默认第一个处理器的入口
     @Override
     public final void invoke(Request request, Response response)
         throws IOException, ServletException {
 
         // Select the Context to be used for this Request
+        // 获取请求中的context
         Context context = request.getContext();
         if (context == null) {
             return;
         }
-
+        // 是否支持异步请求
         if (request.isAsyncSupported()) {
             request.setAsyncSupported(context.getPipeline().isAsyncSupported());
         }
@@ -133,7 +136,7 @@ final class StandardHostValve extends ValveBase {
             // application for processing.
             try {
                 if (!response.isErrorReportRequired()) {
-                    // 调用context的pipeline
+                    // 调用context的pipeline 的第一个处理器进行处理
                     context.getPipeline().getFirst().invoke(request, response);
                 }
             } catch (Throwable t) {

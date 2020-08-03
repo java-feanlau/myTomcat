@@ -57,11 +57,13 @@ final class StandardContextValve extends ValveBase {
      * @exception IOException if an input/output error occurred
      * @exception ServletException if a servlet error occurred
      */
+    // standardContext pipeline中的默认第一个处理器
     @Override
     public final void invoke(Request request, Response response)
         throws IOException, ServletException {
 
         // Disallow any direct access to resources under WEB-INF or META-INF
+        // 获取请求的路径
         MessageBytes requestPathMB = request.getRequestPathMB();
         // 如果访问的路径不存在,设置返回状态码为404
         if ((requestPathMB.startsWithIgnoreCase("/META-INF/", 0))

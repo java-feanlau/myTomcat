@@ -16,16 +16,15 @@
  */
 package org.apache.catalina.core;
 
-import java.io.IOException;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.catalina.Host;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 import org.apache.catalina.valves.ValveBase;
 import org.apache.tomcat.util.res.StringManager;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * Valve that implements the default basic behavior for the
@@ -66,11 +65,13 @@ final class StandardEngineValve extends ValveBase {
      * @exception IOException if an input/output error occurred
      * @exception ServletException if a servlet error occurred
      */
+    // standardEngine 对请求的处理
     @Override
     public final void invoke(Request request, Response response)
         throws IOException, ServletException {
 
         // Select the Host to be used for this Request
+        // 获取此处请求的host
         Host host = request.getHost();
         if (host == null) {
             response.sendError
@@ -79,11 +80,13 @@ final class StandardEngineValve extends ValveBase {
                               request.getServerName()));
             return;
         }
+        // 是否支持异步处理
         if (request.isAsyncSupported()) {
             request.setAsyncSupported(host.getPipeline().isAsyncSupported());
         }
 
         // Ask this Host to process this request
+        // 调用host的pipeline中第一个处理器进行处理
         host.getPipeline().getFirst().invoke(request, response);
 
     }

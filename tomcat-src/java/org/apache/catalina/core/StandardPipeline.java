@@ -19,23 +19,15 @@
 package org.apache.catalina.core;
 
 
-import java.util.ArrayList;
-import java.util.Set;
-
-import javax.management.ObjectName;
-
-import org.apache.catalina.Contained;
-import org.apache.catalina.Container;
-import org.apache.catalina.JmxEnabled;
-import org.apache.catalina.Lifecycle;
-import org.apache.catalina.LifecycleException;
-import org.apache.catalina.LifecycleState;
-import org.apache.catalina.Pipeline;
-import org.apache.catalina.Valve;
+import org.apache.catalina.*;
 import org.apache.catalina.util.LifecycleBase;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.ExceptionUtils;
+
+import javax.management.ObjectName;
+import java.util.ArrayList;
+import java.util.Set;
 
 
 /**
@@ -89,6 +81,7 @@ public class StandardPipeline extends LifecycleBase
     /**
      * The basic Valve (if any) associated with this Pipeline.
      */
+    // pipeline中的 第一个处理器
     protected Valve basic = null;
 
 
@@ -254,15 +247,20 @@ public class StandardPipeline extends LifecycleBase
      *
      * @param valve Valve to be distinguished as the basic Valve
      */
+    // 记录pipeline中 第一个处理的value
     @Override
     public void setBasic(Valve valve) {
 
         // Change components if necessary
+        // 获取pipeline中的第一个处理器
         Valve oldBasic = this.basic;
+        // 如果已有的和要添加的是一样的
+        // 那么就直接返回了,不需要进行添加了
         if (oldBasic == valve)
             return;
 
         // Stop the old component if necessary
+        // 如果已有一个处理器,和要添加的不一样,则释放此旧处理器
         if (oldBasic != null) {
             if (getState().isAvailable() && (oldBasic instanceof Lifecycle)) {
                 try {
@@ -286,6 +284,7 @@ public class StandardPipeline extends LifecycleBase
         if (valve instanceof Contained) {
             ((Contained) valve).setContainer(this.container);
         }
+        // 调用要插入的处理器的 start方法
         if (getState().isAvailable() && valve instanceof Lifecycle) {
             try {
                 ((Lifecycle) valve).start();
@@ -296,6 +295,7 @@ public class StandardPipeline extends LifecycleBase
         }
 
         // Update the pipeline
+        // 更新pipeline
         Valve current = first;
         while (current != null) {
             if (current.getNext() == oldBasic) {
@@ -304,7 +304,7 @@ public class StandardPipeline extends LifecycleBase
             }
             current = current.getNext();
         }
-
+        // 记录好新的 第一个处理器
         this.basic = valve;
 
     }
@@ -457,7 +457,8 @@ public class StandardPipeline extends LifecycleBase
         container.fireContainerEvent(Container.REMOVE_VALVE_EVENT, valve);
     }
 
-
+    // 获取第一个处理器
+    // 如果first为null, 则返回basic
     @Override
     public Valve getFirst() {
         if (first != null) {

@@ -1055,17 +1055,21 @@ public abstract class AbstractEndpoint<S> {
      *
      * @return if processing was triggered successfully
      */
+    // 开始对socket  进行读写的处理
     public boolean processSocket(SocketWrapperBase<S> socketWrapper,
             SocketEvent event, boolean dispatch) {
         try {
             if (socketWrapper == null) {
                 return false;
             }
+            // 从缓存中获取一个处理器
             SocketProcessorBase<S> sc = processorCache.pop();
+            // 如果没有, 则创建一个新的处理器
             if (sc == null) {
                 // 创建对socket具体的一个处理器
                 sc = createSocketProcessor(socketWrapper, event);
             } else {
+                // 如果有,则复位 处理器的属性为当前的 socket
                 sc.reset(socketWrapper, event);
             }
             // 获取线程池
@@ -1075,9 +1079,11 @@ public abstract class AbstractEndpoint<S> {
             // 如果存在线程池中,就在线程池中进行处理了
             // 这里修改为同步,方便调试,不在线程池中进行处理
             // todo  修改同步操作  修改同步
+            // 这里其实就把具体的处理流程,放到了 线程池中去进行处理
             if (dispatch && executor != null) {
                 executor.execute(sc);
             } else {
+                // 没有线程池呢,则在当前的线程中进行处理
                 sc.run();
             }
         } catch (RejectedExecutionException ree) {

@@ -372,11 +372,13 @@ public class MapperListener extends LifecycleMBeanBase
         WebResourceRoot resources = context.getResources();
         // 查找 welcome的servlet
         String[] welcomeFiles = context.findWelcomeFiles();
+        // 此主要存储 context下的 wrapper
         List<WrapperMappingInfo> wrappers = new ArrayList<>();
         /**
          * 注册context对应的servlet信息
          */
         for (Container container : context.findChildren()) {
+            // 把 context下的wrapper存储到 wrappers中
             prepareWrapperMappingInfo(context, (Wrapper) container, wrappers);
 
             if(log.isDebugEnabled()) {

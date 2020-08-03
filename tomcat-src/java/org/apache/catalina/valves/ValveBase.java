@@ -57,6 +57,7 @@ public abstract class ValveBase extends LifecycleMBeanBase implements Contained,
     /**
      * Does this valve support Servlet 3+ async requests?
      */
+    // 是否支持异步处理
     protected boolean asyncSupported;
 
 

@@ -16,27 +16,22 @@
  */
 package org.apache.coyote;
 
+import org.apache.tomcat.util.ExceptionUtils;
+import org.apache.tomcat.util.buf.ByteChunk;
+import org.apache.tomcat.util.buf.MessageBytes;
+import org.apache.tomcat.util.http.parser.Host;
+import org.apache.tomcat.util.log.UserDataHelper;
+import org.apache.tomcat.util.net.*;
+import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
+import org.apache.tomcat.util.res.StringManager;
+
+import javax.servlet.RequestDispatcher;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.servlet.RequestDispatcher;
-
-import org.apache.tomcat.util.ExceptionUtils;
-import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.util.buf.MessageBytes;
-import org.apache.tomcat.util.http.parser.Host;
-import org.apache.tomcat.util.log.UserDataHelper;
-import org.apache.tomcat.util.net.AbstractEndpoint;
-import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
-import org.apache.tomcat.util.net.DispatchType;
-import org.apache.tomcat.util.net.SSLSupport;
-import org.apache.tomcat.util.net.SocketEvent;
-import org.apache.tomcat.util.net.SocketWrapperBase;
-import org.apache.tomcat.util.res.StringManager;
 
 /**
  * Provides functionality and attributes common to all supported protocols
@@ -77,15 +72,21 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
     protected final UserDataHelper userDataHelper;
 
     public AbstractProcessor(AbstractEndpoint<?> endpoint) {
+        // 记录了endpoint
+        // 创建了 request
+        // 创建了response
         this(endpoint, new Request(), new Response());
     }
 
 
     protected AbstractProcessor(AbstractEndpoint<?> endpoint, Request coyoteRequest,
             Response coyoteResponse) {
+        // 记录此 endpoint
         this.endpoint = endpoint;
         asyncStateMachine = new AsyncStateMachine(this);
+        // 记录刚创建的 request
         request = coyoteRequest;
+        // 记录刚创建的 response
         response = coyoteResponse;
         response.setHook(this);
         request.setResponse(response);
@@ -143,6 +144,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
      *
      * @param adapter the new adapter
      */
+    // 记录 适配器
     public void setAdapter(Adapter adapter) {
         this.adapter = adapter;
     }
