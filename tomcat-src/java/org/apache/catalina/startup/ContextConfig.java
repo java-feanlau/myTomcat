@@ -228,6 +228,8 @@ public class ContextConfig implements LifecycleListener {
      *
      * @param event The lifecycle event that has occurred
      */
+    // 对各种事件的解析,其中包括了对 web.xml文件的解析
+    // 从中可以看到,包含了其整个的生命周期
     @Override
     public void lifecycleEvent(LifecycleEvent event) {
 
@@ -241,6 +243,7 @@ public class ContextConfig implements LifecycleListener {
 
         // Process the event that has occurred
         if (event.getType().equals(Lifecycle.CONFIGURE_START_EVENT)) {
+            // 配置文件 开始解析
             configureStart();
         } else if (event.getType().equals(Lifecycle.BEFORE_START_EVENT)) {
             beforeStart();
@@ -710,7 +713,7 @@ public class ContextConfig implements LifecycleListener {
                     Boolean.valueOf(context.getXmlValidation()),
                     Boolean.valueOf(context.getXmlNamespaceAware())));
         }
-
+        // 解析 web.xml 文件
         webConfig();
         // 添加的jsp解析
         context.addServletContainerInitializer(new JasperInitializer(),null);
@@ -1015,6 +1018,7 @@ public class ContextConfig implements LifecycleListener {
      * an application's web.xml takes precedence over the host level or global
      * web.xml file.
      */
+    // 对web.xml文件的解析
     protected void webConfig() {
         /*
          * Anything and everything can override the global and host defaults.
