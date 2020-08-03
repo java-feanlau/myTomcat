@@ -710,6 +710,7 @@ public final class Mapper {
      *                     the mapping.
      */
     // 解析host  context  servlet 根据 uri
+    // mappingData 记录具体的映射关系
     public void map(MessageBytes host, MessageBytes uri, String version,
                     MappingData mappingData) throws IOException {
 
@@ -755,6 +756,7 @@ public final class Mapper {
      * Map the specified URI.
      * @throws IOException
      */
+    // 解析 此请求对应的  host, context
     private final void internalMap(CharChunk host, CharChunk uri,
             String version, MappingData mappingData) throws IOException {
 
