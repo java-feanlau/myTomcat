@@ -4659,6 +4659,9 @@ public class StandardContext extends ContainerBase
             try {
                 fireContainerEvent("beforeContextInitialized", listener);
                 if (noPluggabilityListeners.contains(listener)) {
+                    // 在此处会调用监听器中的contextInitialized方法,
+                    // 在springMVC和spring的整合中 web.xml中配置的监听器ContextLoaderListener 就在这里调用的
+                    // 此监听器 ContextLoaderListener 创建了 XMLWebApplicationContext
                     listener.contextInitialized(tldEvent);
                 } else {
                     listener.contextInitialized(event);
