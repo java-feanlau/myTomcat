@@ -50,6 +50,7 @@ public abstract class AbstractProcessorLight implements Processor {
             } else if (status == SocketEvent.DISCONNECT) {
                 // Do nothing here, just wait for it to get recycled
             } else if (isAsync() || isUpgrade() || state == SocketState.ASYNC_END) {
+                //  分发操作
                 state = dispatch(status);
                 if (state == SocketState.OPEN) {
                     // There may be pipe-lined data to read. If the data isn't

@@ -168,6 +168,7 @@ public class SocketProperties {
      * The minimum frequency of the timeout interval to avoid excess load from
      * the poller during high traffic
      */
+    // timeout的 间隔
     protected long timeoutInterval = 1000;
 
     /**

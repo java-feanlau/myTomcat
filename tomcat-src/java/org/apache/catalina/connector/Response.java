@@ -575,6 +575,7 @@ public class Response implements HttpServletResponse {
      *  already been called for this response
      * @exception IOException if an input/output error occurs
      */
+    // 获取 写数据的handler
     @Override
     public PrintWriter getWriter()
         throws IOException {
@@ -601,8 +602,10 @@ public class Response implements HttpServletResponse {
         }
 
         usingWriter = true;
+        // 检测outputBuffer 是否设置了转换器,如果没有设置 则创建一个
         outputBuffer.checkConverter();
         if (writer == null) {
+            // 创建一个 writer
             writer = new CoyoteWriter(outputBuffer);
         }
         return writer;

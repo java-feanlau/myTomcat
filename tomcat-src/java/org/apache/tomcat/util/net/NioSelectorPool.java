@@ -60,9 +60,12 @@ public class NioSelectorPool {
             new ConcurrentLinkedQueue<>();
 
     protected Selector getSharedSelector() throws IOException {
+        // SHARED 默认是 true
+        // SHARED_SELECTOR 就是 nioselector
         if (SHARED && SHARED_SELECTOR == null) {
             synchronized ( NioSelectorPool.class ) {
                 if ( SHARED_SELECTOR == null )  {
+                    // 创建 nioselector,并赋值给 SHARED_SELECTOR
                     SHARED_SELECTOR = Selector.open();
                     log.info("Using a shared selector for servlet write/read");
                 }
@@ -72,6 +75,7 @@ public class NioSelectorPool {
     }
 
     public Selector get() throws IOException{
+        // 如果设置了 SHARED ,则返回  shared nioselector
         if ( SHARED ) {
             return getSharedSelector();
         }
@@ -127,6 +131,7 @@ public class NioSelectorPool {
 
     public void open() throws IOException {
         enabled = true;
+        // 如果允许 share,则创建了一个 nioselector
         getSharedSelector();
         if (SHARED) {
             blockingSelector = new NioBlockingSelector();
@@ -154,6 +159,8 @@ public class NioSelectorPool {
     public int write(ByteBuffer buf, NioChannel socket, Selector selector,
                      long writeTimeout, boolean block) throws IOException {
         if ( SHARED && block ) {
+            // 把buf中的数据写入到 socketChannel中
+            // 阻塞写入
             return blockingSelector.write(buf,socket,writeTimeout);
         }
         SelectionKey key = null;
@@ -165,6 +172,8 @@ public class NioSelectorPool {
             while ( (!timedout) && buf.hasRemaining() ) {
                 int cnt = 0;
                 if ( keycount > 0 ) { //only write if we were registered for a write
+                    // 把数据写入到 socketChannel中
+                    // --- 重点-----
                     cnt = socket.write(buf); //write the data
                     if (cnt == -1) throw new EOFException();
 
@@ -177,17 +186,24 @@ public class NioSelectorPool {
                 }
                 if ( selector != null ) {
                     //register OP_WRITE to the selector
+                    // 重新把此 socketChannel注册为 write 事件
                     if (key==null) key = socket.getIOChannel().register(selector, SelectionKey.OP_WRITE);
                     else key.interestOps(SelectionKey.OP_WRITE);
+                    // 如果 writeTimeout =0,且 buf中还数据没有写完,则表示超时
                     if (writeTimeout==0) {
                         timedout = buf.hasRemaining();
+                        // writeTimeout小于0, 已经超时,则进行一次 网络io
                     } else if (writeTimeout<0) {
                         keycount = selector.select();
                     } else {
+                        // 进行一次 网络io,有超时时间的,相当于进行一次 网络io
                         keycount = selector.select(writeTimeout);
                     }
                 }
-                if (writeTimeout > 0 && (selector == null || keycount == 0) ) timedout = (System.currentTimeMillis()-time)>=writeTimeout;
+                // 判断是否超时
+                // 写时间 超过了 writeTimeout,则表示已经超时了
+                if (writeTimeout > 0 && (selector == null || keycount == 0) )
+                    timedout = (System.currentTimeMillis()-time)>=writeTimeout;
             }//while
             if ( timedout ) throw new SocketTimeoutException();
         } finally {

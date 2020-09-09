@@ -41,9 +41,10 @@ public class CoyoteWriter extends PrintWriter {
 
     // ----------------------------------------------------------- Constructors
 
-
+    // 构造器
     public CoyoteWriter(OutputBuffer ob) {
         super(ob);
+        // 记录 outputBuffer
         this.ob = ob;
     }
 
@@ -158,15 +159,16 @@ public class CoyoteWriter extends PrintWriter {
         write(buf, 0, buf.length);
     }
 
-
+    // 把数据写入到 buffer
     @Override
     public void write(String s, int off, int len) {
 
         if (error) {
             return;
         }
-
+        // 把数据写入到 outputBuffer中
         try {
+            // 写出操作
             ob.write(s, off, len);
         } catch (IOException e) {
             error = true;
@@ -174,7 +176,7 @@ public class CoyoteWriter extends PrintWriter {
 
     }
 
-
+    // 想outputBuffer中写出数据
     @Override
     public void write(String s) {
         write(s, 0, s.length());

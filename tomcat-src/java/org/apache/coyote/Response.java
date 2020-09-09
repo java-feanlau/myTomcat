@@ -597,6 +597,7 @@ public final class Response {
      */
     public void doWrite(ByteBuffer chunk) throws IOException {
         int len = chunk.remaining();
+        // 写出数据到 socketChannel中
         outputBuffer.doWrite(chunk);
         contentWritten += len - chunk.remaining();
     }

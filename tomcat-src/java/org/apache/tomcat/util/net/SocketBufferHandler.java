@@ -29,20 +29,24 @@ public class SocketBufferHandler {
     private volatile ByteBuffer writeBuffer;
 
     private final boolean direct;
-
+    // 创建socketBufferHandler
     public SocketBufferHandler(int readBufferSize, int writeBufferSize,
             boolean direct) {
+        // 默认不适用 directBuffer
         this.direct = direct;
         if (direct) {
+            // 如果设置了使用directBuffer呢
+            // 设置 directBuffer 缓冲区
             readBuffer = ByteBuffer.allocateDirect(readBufferSize);
             writeBuffer = ByteBuffer.allocateDirect(writeBufferSize);
         } else {
+            // 分配 读写 缓冲区
             readBuffer = ByteBuffer.allocate(readBufferSize);
             writeBuffer = ByteBuffer.allocate(writeBufferSize);
         }
     }
 
-
+    // 配置readBuffer
     public void configureReadBufferForWrite() {
         setReadBufferConfiguredForWrite(true);
     }
@@ -52,20 +56,23 @@ public class SocketBufferHandler {
         setReadBufferConfiguredForWrite(false);
     }
 
-
+    // 配置 readBuffer到 写模式
     private void setReadBufferConfiguredForWrite(boolean readBufferConFiguredForWrite) {
         // NO-OP if buffer is already in correct state
         if (this.readBufferConfiguredForWrite != readBufferConFiguredForWrite) {
             if (readBufferConFiguredForWrite) {
                 // Switching to write
                 int remaining = readBuffer.remaining();
+                // 如果没有数据,则直接 clear
                 if (remaining == 0) {
                     readBuffer.clear();
                 } else {
+                    // readBuffer中有数据,则compact 数据
                     readBuffer.compact();
                 }
             } else {
                 // Switching to read
+                // 转换到 读模式
                 readBuffer.flip();
             }
             this.readBufferConfiguredForWrite = readBufferConFiguredForWrite;
@@ -132,7 +139,7 @@ public class SocketBufferHandler {
         return writeBuffer;
     }
 
-
+        // writeBuffer 是否为空
     public boolean isWriteBufferEmpty() {
         if (writeBufferConfiguredForWrite) {
             return writeBuffer.position() == 0;
@@ -141,7 +148,7 @@ public class SocketBufferHandler {
         }
     }
 
-
+    // 读写缓冲区复位 以及 标志位的设置
     public void reset() {
         readBuffer.clear();
         readBufferConfiguredForWrite = true;

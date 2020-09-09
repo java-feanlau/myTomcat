@@ -56,9 +56,10 @@ public class LimitLatch {
             return true;
         }
     }
-
+    // 同步器
     private final Sync sync;
     private final AtomicLong count;
+    // 数量限制
     private volatile long limit;
     private volatile boolean released = false;
 

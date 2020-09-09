@@ -60,6 +60,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
     protected final AbstractEndpoint<?> endpoint;
     protected final Request request;
     protected final Response response;
+    // 记录此处理的 NioSocketWrapper
     protected volatile SocketWrapperBase<?> socketWrapper = null;
     protected volatile SSLSupport sslSupport;
 
@@ -209,6 +210,7 @@ public abstract class AbstractProcessor extends AbstractProcessorLight implement
         if (status == SocketEvent.OPEN_WRITE && response.getWriteListener() != null) {
             asyncStateMachine.asyncOperation();
             try {
+                // flush 即: 把socketBufferHandler中writeBuffer 数据写出到 socketChannel中
                 if (flushBufferedWrite()) {
                     return SocketState.LONG;
                 }

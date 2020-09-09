@@ -1283,7 +1283,8 @@ public abstract class AbstractEndpoint<S> {
         if (latch!=null) latch.releaseAll();
         connectionLimitLatch = null;
     }
-
+    // 相当于获取一个锁,如果获取不到,则等待
+    // 锁的数量就是 最大连接数的数量
     protected void countUpOrAwaitConnection() throws InterruptedException {
         if (maxConnections==-1) return;
         LimitLatch latch = connectionLimitLatch;

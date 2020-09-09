@@ -641,12 +641,16 @@ public class Http11Processor extends AbstractProcessor {
     @Override
     public SocketState service(SocketWrapperBase<?> socketWrapper)
         throws IOException {
+        // 获取 requestInfo
         RequestInfo rp = request.getRequestProcessor();
+        // 这是stage
         rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);
 
         // Setting up the I/O
+        // 记录 NioSocketWrapper
         setSocketWrapper(socketWrapper);
         inputBuffer.init(socketWrapper);
+        //
         outputBuffer.init(socketWrapper);
 
         // Flags
@@ -1455,7 +1459,7 @@ public class Http11Processor extends AbstractProcessor {
         request.setServerPort(request.getLocalPort());
     }
 
-
+    // 把socketBufferHandler中 writeBuffer数据写出到  socketChannel中
     @Override
     protected boolean flushBufferedWrite() throws IOException {
         if (outputBuffer.hasDataToWrite()) {

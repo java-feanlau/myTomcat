@@ -1381,13 +1381,13 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel> {
 
             super.flushBlocking();
         }
-
+        // 非阻塞的把数据写出到 socketChannel中
         @Override
         protected boolean flushNonBlocking() throws IOException {
             checkError();
             return flushNonBlockingInternal(false);
         }
-
+        // 非阻塞的 把数据写出到 socketChannel中
         private boolean flushNonBlockingInternal(boolean hasPermit) {
             synchronized (writeCompletionHandler) {
                 if (writeNotify || hasPermit || writePending.tryAcquire()) {
@@ -1397,12 +1397,14 @@ public class Nio2Endpoint extends AbstractJsseEndpoint<Nio2Channel> {
                     if (!nonBlockingWriteBuffer.isEmpty()) {
                         ByteBuffer[] array = nonBlockingWriteBuffer.toArray(socketBufferHandler.getWriteBuffer());
                         Nio2Endpoint.startInline();
+                        // 把channel中的数据写出到 socketChannel中
                         getSocket().write(array, 0, array.length, toTimeout(getWriteTimeout()),
                                 TimeUnit.MILLISECONDS, array, gatheringWriteCompletionHandler);
                         Nio2Endpoint.endInline();
                     } else if (socketBufferHandler.getWriteBuffer().hasRemaining()) {
                         // Regular write
                         Nio2Endpoint.startInline();
+                        // 把数据写入到 socketChannel中
                         getSocket().write(socketBufferHandler.getWriteBuffer(), toTimeout(getWriteTimeout()),
                                 TimeUnit.MILLISECONDS, socketBufferHandler.getWriteBuffer(),
                                 writeCompletionHandler);

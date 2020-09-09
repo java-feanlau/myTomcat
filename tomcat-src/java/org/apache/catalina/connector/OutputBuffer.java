@@ -50,12 +50,13 @@ import org.apache.tomcat.util.res.StringManager;
 public class OutputBuffer extends Writer {
 
     private static final StringManager sm = StringManager.getManager(OutputBuffer.class);
-
+    //  默认的 buffer 大小 8192
     public static final int DEFAULT_BUFFER_SIZE = 8 * 1024;
 
     /**
      * Encoder cache.
      */
+    // 缓存字符集 和 转换器的映射关系
     private final Map<Charset, C2BConverter> encoders = new HashMap<>();
 
 
@@ -349,6 +350,7 @@ public class OutputBuffer extends Writer {
         if (buf.remaining() > 0) {
             // real write to the adapter
             try {
+                // 写出数据到 socketChannel中
                 coyoteResponse.doWrite(buf);
             } catch (CloseNowException e) {
                 // Catch this sub-class as it requires specific handling.
@@ -455,12 +457,14 @@ public class OutputBuffer extends Writer {
     public void realWriteChars(CharBuffer from) throws IOException {
 
         while (from.remaining() > 0) {
+            // 把from中的数据编码 并放入到 bb  buffer中
             conv.convert(from, bb);
             if (bb.remaining() == 0) {
                 // Break out of the loop if more chars are needed to produce any output
                 break;
             }
             if (from.remaining() > 0) {
+                // 写出数据到 socketChannel中
                 flushByteBuffer();
             } else if (conv.isUndeflow() && bb.limit() > bb.capacity() - 4) {
                 // Handle an edge case. There are no more chars to write at the
@@ -538,7 +542,10 @@ public class OutputBuffer extends Writer {
         while (sOff < sEnd) {
             int n = transfer(s, sOff, sEnd - sOff, cb);
             sOff += n;
+            // 如果cb buffer 已经满了,则flush一次
             if (isFull(cb)) {
+                // 这里的flush会对 buffer中的数据进行编码 并 写出到 socketChannel中
+                // --- ----
                 flushCharBuffer();
             }
         }
@@ -582,7 +589,7 @@ public class OutputBuffer extends Writer {
         if (coyoteResponse != null) {
             charset = coyoteResponse.getCharset();
         }
-
+        // 如果没有设置 字符集,则使用默认的字符集  ISO_8859_1
         if (charset == null) {
             if (enc == null) {
                 charset = org.apache.coyote.Constants.DEFAULT_BODY_CHARSET;
@@ -592,9 +599,11 @@ public class OutputBuffer extends Writer {
         }
 
         conv = encoders.get(charset);
-
+        // 创建转换器
         if (conv == null) {
+            // 创建一个 转换器
             conv = createConverter(charset);
+            // 记录映射关系
             encoders.put(charset, conv);
         }
     }
@@ -830,10 +839,11 @@ public class OutputBuffer extends Writer {
     }
 
     private void flushByteBuffer() throws IOException {
+        // 写出数据到 socketChannel中
         realWriteBytes(bb.slice());
         clear(bb);
     }
-
+    // flush操作, 是封装了编码和 写出操作
     private void flushCharBuffer() throws IOException {
         realWriteChars(cb.slice());
         clear(cb);

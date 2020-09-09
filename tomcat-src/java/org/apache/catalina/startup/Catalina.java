@@ -673,6 +673,7 @@ public class Catalina {
     public void start() {
 
         if (getServer() == null) {
+            // 没有初始化就进行初始化
             load();
         }
 
@@ -685,6 +686,7 @@ public class Catalina {
 
         // Start the new server
         try {
+            // 开始启动
             getServer().start();
         } catch (LifecycleException e) {
             log.fatal(sm.getString("catalina.serverStartFail"), e);

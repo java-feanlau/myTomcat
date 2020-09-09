@@ -38,16 +38,18 @@ public class NioChannel implements ByteChannel {
     protected static final StringManager sm = StringManager.getManager(NioChannel.class);
 
     protected static final ByteBuffer emptyBuf = ByteBuffer.allocate(0);
-
+    // 包装的 socketChannel
     protected SocketChannel sc = null;
     protected SocketWrapperBase<NioChannel> socketWrapper = null;
 
     protected final SocketBufferHandler bufHandler;
-
+    // 记录此NioChannel注册的 poller
     protected Poller poller;
 
     public NioChannel(SocketChannel channel, SocketBufferHandler bufHandler) {
+        // 接收到的 socketChannel
         this.sc = channel;
+        // 此bufHandler中 有读写 缓冲区 ByteBuffer
         this.bufHandler = bufHandler;
     }
 
@@ -56,11 +58,12 @@ public class NioChannel implements ByteChannel {
      *
      * @throws IOException If a problem was encountered resetting the channel
      */
+    // reset,主要是复位缓存区
     public void reset() throws IOException {
         bufHandler.reset();
     }
 
-
+    // 记录 channel的包装类 socketWrapper
     void setSocketWrapper(SocketWrapperBase<NioChannel> socketWrapper) {
         this.socketWrapper = socketWrapper;
     }
@@ -128,9 +131,11 @@ public class NioChannel implements ByteChannel {
      * @return The number of bytes written, possibly zero
      * @throws IOException If some other I/O error occurs
      */
+    // 写数据到 scoketChannel中
     @Override
     public int write(ByteBuffer src) throws IOException {
         checkInterruptStatus();
+        // 把数据写入到 socketChannel中
         return sc.write(src);
     }
 
@@ -142,8 +147,10 @@ public class NioChannel implements ByteChannel {
      *         channel has reached end-of-stream
      * @throws IOException If some other I/O error occurs
      */
+    // 数据读取
     @Override
     public int read(ByteBuffer dst) throws IOException {
+        // 直接从 socketChannel中读取数据到
         return sc.read(dst);
     }
 
@@ -154,7 +161,7 @@ public class NioChannel implements ByteChannel {
         Object att = key!=null?key.attachment():null;
         return att;
     }
-
+    // 获取此NioChannel 绑定的 buffer
     public SocketBufferHandler getBufHandler() {
         return bufHandler;
     }
@@ -187,11 +194,11 @@ public class NioChannel implements ByteChannel {
     public int handshake(boolean read, boolean write) throws IOException {
         return 0;
     }
-
+    // 记录此 NioChannel 注册到了 哪一个poller上面
     public void setPoller(Poller poller) {
         this.poller = poller;
     }
-
+    // 如果此NioChannel是复用的, 调用此函数,实现记录对应的socketChannel
     public void setIOChannel(SocketChannel IOChannel) {
         this.sc = IOChannel;
     }
@@ -235,6 +242,7 @@ public class NioChannel implements ByteChannel {
 
 
     private ApplicationBufferHandler appReadBufHandler;
+    // 记录此 NioChannel的 readBufferHandler -- Http11InputBuffer
     public void setAppReadBufHandler(ApplicationBufferHandler handler) {
         this.appReadBufHandler = handler;
     }

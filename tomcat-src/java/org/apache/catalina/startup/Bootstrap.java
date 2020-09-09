@@ -277,7 +277,7 @@ public final class Bootstrap {
         Method method =
             startupInstance.getClass().getMethod(methodName, paramTypes);
         method.invoke(startupInstance, paramValues);
-
+        // 此实例是  org.apache.catalina.startup.Catalina
         catalinaDaemon = startupInstance;
 
     }

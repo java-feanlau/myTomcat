@@ -715,7 +715,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                 // Nothing to do. Socket has been closed.
                 return SocketState.CLOSED;
             }
-            // 获取 接收到的socket
+            // 获取 接收到的NioChannel
             S socket = wrapper.getSocket();
 
             Processor processor = connections.get(socket);
@@ -869,7 +869,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                         }
                     }
                 } while ( state == SocketState.UPGRADING);
-
+                // 此种状态是
                 if (state == SocketState.LONG) {
                     // In the middle of processing a request/response. Keep the
                     // socket associated with the processor. Exact requirements
@@ -883,6 +883,7 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                     // processor. Continue to poll for the next request.
                     connections.remove(socket);
                     release(processor);
+                    // 注册 read事件
                     wrapper.registerReadInterest();
                 } else if (state == SocketState.SENDFILE) {
                     // Sendfile in progress. If it fails, the socket will be

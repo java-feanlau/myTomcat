@@ -365,6 +365,8 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
                         // timeout.
                         wrapper.setReadTimeout(wrapper.getEndpoint().getKeepAliveTimeout());
                     }
+                    // -- 重点 --
+                    // 从socketChannel中读取数据 到 this.byteBuffer中
                     if (!fill(false)) {
                         // A read is pending, so no longer in initial state
                         parsingRequestLinePhase = 1;
@@ -694,15 +696,18 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
         }
     }
 
-
+    // 输入buffer的初始化
     void init(SocketWrapperBase<?> socketWrapper) {
 
         wrapper = socketWrapper;
+        // 记录当前的 Http11InputBuffer 到 NioChannel中
         wrapper.setAppReadBufHandler(this);
-
+        // buf 的 长度
+        // header的长度 + SocketBufferHandler.readBuf.capacity
         int bufLength = headerBufferSize +
                 wrapper.getSocketBufferHandler().getReadBuffer().capacity();
         if (byteBuffer == null || byteBuffer.capacity() < bufLength) {
+            // 重新分配一个 buffer
             byteBuffer = ByteBuffer.allocate(bufLength);
             byteBuffer.position(0).limit(0);
         }
@@ -718,6 +723,7 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
      * @return <code>true</code> if more data was added to the input buffer
      *         otherwise <code>false</code>
      */
+    // 从socketChannel中读取数据到 byteBuffer中
     private boolean fill(boolean block) throws IOException {
 
         if (parsingHeader) {
@@ -737,6 +743,8 @@ public class Http11InputBuffer implements InputBuffer, ApplicationBufferHandler 
             byteBuffer.position(byteBuffer.limit());
         }
         byteBuffer.limit(byteBuffer.capacity());
+        // --- ----
+        // 真正从 socketChannel读取数据到 byteBuffer中
         int nRead = wrapper.read(block, byteBuffer);
         byteBuffer.limit(byteBuffer.position()).reset();
         if (nRead > 0) {

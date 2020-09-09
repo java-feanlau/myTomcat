@@ -90,6 +90,7 @@ public class Http11OutputBuffer implements HttpOutputBuffer {
     /**
      * Wrapper for socket where data will be written to.
      */
+    // NioSocketWrapper 记录
     protected SocketWrapperBase<?> socketWrapper;
 
 
@@ -220,6 +221,7 @@ public class Http11OutputBuffer implements HttpOutputBuffer {
         }
 
         if (lastActiveFilter == -1) {
+            // 写出数据到 socketChannel中 或者 写入到 socketBufferHandler的 writeBuffer中
             return outputStreamOutputBuffer.doWrite(chunk);
         } else {
             return activeFilters[lastActiveFilter].doWrite(chunk);
@@ -311,7 +313,7 @@ public class Http11OutputBuffer implements HttpOutputBuffer {
         byteCount = 0;
     }
 
-
+    // 输出buffer的初始化
     public void init(SocketWrapperBase<?> socketWrapper) {
         this.socketWrapper = socketWrapper;
     }
@@ -556,6 +558,7 @@ public class Http11OutputBuffer implements HttpOutputBuffer {
      *          happen in non-blocking mode) else <code>false</code>.
      * @throws IOException Error writing data
      */
+    // 把socketBufferHandler 中 writeBuffer数据写出到 socketChannel中
     protected boolean flushBuffer(boolean block) throws IOException  {
         return socketWrapper.flush(block);
     }
@@ -620,6 +623,7 @@ public class Http11OutputBuffer implements HttpOutputBuffer {
         public int doWrite(ByteBuffer chunk) throws IOException {
             try {
                 int len = chunk.remaining();
+                // 写出数据到 socketChannel中
                 socketWrapper.write(isBlocking(), chunk);
                 len -= chunk.remaining();
                 byteCount += len;

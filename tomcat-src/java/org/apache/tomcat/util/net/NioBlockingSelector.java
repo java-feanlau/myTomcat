@@ -54,7 +54,9 @@ public class NioBlockingSelector {
     }
 
     public void open(Selector selector) {
+        // 赋值 nioselector
         sharedSelector = selector;
+        // 创建一个
         poller = new BlockPoller();
         poller.selector = sharedSelector;
         poller.setDaemon(true);
@@ -84,6 +86,7 @@ public class NioBlockingSelector {
      */
     public int write(ByteBuffer buf, NioChannel socket, long writeTimeout)
             throws IOException {
+        // 获取注册的key
         SelectionKey key = socket.getIOChannel().keyFor(socket.getPoller().getSelector());
         if ( key == null ) throw new IOException("Key no longer registered");
         KeyReference reference = keyReferenceStack.pop();
@@ -98,6 +101,7 @@ public class NioBlockingSelector {
         try {
             while ( (!timedout) && buf.hasRemaining()) {
                 if (keycount > 0) { //only write if we were registered for a write
+                    // 写数据到 scoketChannel中
                     int cnt = socket.write(buf); //write the data
                     if (cnt == -1)
                         throw new EOFException();
@@ -108,6 +112,7 @@ public class NioBlockingSelector {
                     }
                 }
                 try {
+                    // 注册到 poller中
                     if ( att.getWriteLatch()==null || att.getWriteLatch().getCount()==0) att.startWriteLatch(1);
                     poller.add(att,SelectionKey.OP_WRITE,reference);
                     if (writeTimeout < 0) {
@@ -170,6 +175,7 @@ public class NioBlockingSelector {
         try {
             while(!timedout) {
                 if (keycount > 0) { //only read if we were registered for a read
+                    // 从socketChannel中读取数据到 buf中
                     read = socket.read(buf);
                     if (read != 0) {
                         break;
@@ -214,6 +220,7 @@ public class NioBlockingSelector {
     protected static class BlockPoller extends Thread {
         protected volatile boolean run = true;
         protected Selector selector = null;
+        // 存储要运行的 事件,事件是runnable的子类
         protected final SynchronizedQueue<Runnable> events = new SynchronizedQueue<>();
         public void disable() { run = false; selector.wakeup();}
         protected final AtomicInteger wakeupCounter = new AtomicInteger(0);
@@ -277,6 +284,7 @@ public class NioBlockingSelector {
              */
             int size = events.size();
             for (int i = 0; i < size && (r = events.poll()) != null; i++) {
+                // 遍历所有的 事件, 执行事件
                 r.run();
             }
 
@@ -287,6 +295,7 @@ public class NioBlockingSelector {
         public void run() {
             while (run) {
                 try {
+                    // 执行events队列中的所有事件
                     events();
                     int keyCount = 0;
                     try {
@@ -319,10 +328,14 @@ public class NioBlockingSelector {
                     // Walk through the collection of ready keys and dispatch
                     // any active event.
                     while (run && iterator != null && iterator.hasNext()) {
+                        // 获取 就绪 key
                         SelectionKey sk = iterator.next();
+                        // 获取 attachment
                         NioSocketWrapper attachment = (NioSocketWrapper)sk.attachment();
                         try {
+                            // 移除key
                             iterator.remove();
+                            // 移除 ready 事件
                             sk.interestOps(sk.interestOps() & (~sk.readyOps()));
                             if ( sk.isReadable() ) {
                                 countDown(attachment.getReadLatch());
