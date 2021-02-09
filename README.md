@@ -1,4 +1,10 @@
 # myTomcat
+
+```
+mvn clean compile
+```
+
+
 tomcat源码debug搭建
 
 本地搭建时，jvm参数配置:
@@ -13,5 +19,7 @@ tomcat源码debug搭建
 ```
 
 参考博客
+
 [https://my.oschina.net/u/3737136/blog/2992813](https://my.oschina.net/u/3737136/blog/2992813)
+
 [https://juejin.im/post/5b2b5e90e51d4558cc35b89b](https://juejin.im/post/5b2b5e90e51d4558cc35b89b)
