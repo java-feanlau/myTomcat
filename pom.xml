@@ -10,6 +10,6 @@
     <packaging>pom</packaging>    
     
     <modules>    
-        <module>tomcat-src</module>    
+        <module>apache-tomcat-src</module>    
     </modules>    
 </project>
